@@ -1,0 +1,719 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  /* Toast animation */
+  @keyframes slide-in {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-in {
+    animation: slide-in 0.3s ease-out;
+  }
+}
+
+@layer utilities {
+  /* Screen preview styles */
+  .print-container {
+    margin: 0 auto;
+    padding: 1.5rem;
+    max-width: 1200px;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    font-family: 'Times New Roman', serif;
+    position: relative;
+    overflow: visible;
+  }
+  
+  .print-header-image {
+    text-align: center;
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+  
+  .print-header-img {
+    max-height: 120px;
+    width: auto;
+    margin: 0 auto;
+    display: block;
+  }
+  
+  .print-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #1f2937;
+  }
+  
+  .print-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0;
+    line-height: 1.3;
+    color: #111827;
+    letter-spacing: 0.5px;
+  }
+  
+  .print-info {
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+  }
+  
+  .print-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem 1.5rem;
+    align-items: baseline;
+    position: relative;
+    overflow: visible;
+  }
+  
+  .print-info-item {
+    display: flex;
+    align-items: baseline;
+    line-height: 1.6;
+    min-height: 1.5rem;
+  }
+  
+  .print-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+    color: #374151;
+  }
+  
+  .print-field {
+    flex: 1;
+    min-width: 0;
+    padding: 0 0.5rem;
+    display: inline-block;
+    text-align: left;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #111827;
+  }
+  
+  /* Editable field inputs styled to look like document fields */
+  .print-field-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.1rem 0.3rem;
+    border: none;
+    border-bottom: 1px solid #d1d5db;
+    background: transparent;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #111827;
+    font-family: 'Times New Roman', serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  
+  .print-field-input:focus {
+    border-bottom-color: #3b82f6;
+    border-bottom-width: 2px;
+  }
+  
+  .print-field-input.print-field-readonly {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+    border-bottom: none;
+  }
+  
+  .print-field-select {
+    flex: 1;
+    min-width: 0;
+    padding: 0.1rem 0.3rem;
+    border: none;
+    border-bottom: 1px solid #d1d5db;
+    background: transparent;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #111827;
+    font-family: 'Times New Roman', serif;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+  }
+  
+  .print-field-select:focus {
+    border-bottom-color: #3b82f6;
+    border-bottom-width: 2px;
+  }
+  
+  /* Fix dropdown overflow */
+  .print-info-item,
+  .print-summary-item {
+    position: relative;
+    overflow: visible;
+    z-index: 1;
+  }
+  
+  .print-info-item:has(.print-field-select:focus),
+  .print-summary-item:has(.print-field-select:focus) {
+    z-index: 10;
+  }
+  
+  .print-field-select {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .print-field-select:focus {
+    z-index: 10;
+  }
+  
+  .print-field-select option {
+    background: white;
+    color: #111827;
+    padding: 0.25rem;
+  }
+  
+  /* Ensure dropdowns don't get clipped */
+  .print-info,
+  .print-summary {
+    overflow: visible;
+    position: relative;
+  }
+  
+  .print-field-display {
+    flex: 1;
+    min-width: 0;
+    padding: 0 0.3rem;
+    display: inline-block;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #111827;
+  }
+  
+  .print-table-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 0.875rem;
+    padding: 0.2rem;
+    outline: none;
+    font-family: 'Times New Roman', serif;
+    color: #111827;
+  }
+  
+  .print-table-input:focus {
+    background-color: #f0f9ff;
+    border-radius: 2px;
+  }
+  
+  .print-field-textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+    padding: 0.5rem 0.75rem;
+    font-family: 'Times New Roman', serif;
+    color: #111827;
+    resize: vertical;
+    outline: none;
+    min-height: 3rem;
+  }
+  
+  .print-field-textarea:focus {
+    background-color: #f9fafb;
+    border-radius: 4px;
+  }
+  
+  .print-table {
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+  }
+  
+  .print-table-main {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    border: 1px solid #1f2937;
+  }
+  
+  .print-th {
+    border: 1px solid #1f2937;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    background-color: #f3f4f6;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: #111827;
+  }
+  
+  .print-td {
+    border: 1px solid #1f2937;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: #111827;
+  }
+  
+  .print-td-center {
+    text-align: center;
+  }
+  
+  .print-summary {
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+  }
+  
+  .print-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    align-items: baseline;
+  }
+  
+  .print-summary-item {
+    display: flex;
+    align-items: baseline;
+    line-height: 1.6;
+  }
+  
+  .print-footer {
+    margin-top: 2rem;
+    font-size: 0.95rem;
+  }
+  
+  .print-remarks {
+    margin-bottom: 1.5rem;
+  }
+  
+  .print-remarks-box {
+    min-height: 3rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #111827;
+  }
+  
+  .print-signatures {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 2rem;
+  }
+  
+  .print-signature-item {
+    flex: 1;
+    max-width: 45%;
+  }
+  
+  .print-signature-item .print-label {
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+  
+  .print-signature-line {
+    padding-top: 0.5rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    width: 100%;
+    color: #111827;
+  }
+
+  @media print {
+    /* Hide all interactive elements */
+    button,
+    nav,
+    .no-print,
+    header,
+    footer {
+      display: none !important;
+    }
+    
+    /* Reset body for print */
+    body {
+      margin: 0;
+      padding: 0;
+      background: white;
+      font-size: 9pt;
+      line-height: 1.3;
+      color: black;
+      font-family: 'Times New Roman', serif;
+    }
+    
+    /* Centered container for A4 landscape */
+  .print-container {
+    margin: 0 auto;
+    padding: 0.4cm;
+    max-width: 27.7cm; /* A4 landscape width minus margins */
+    page-break-inside: avoid;
+    font-size: 9pt;
+    position: relative;
+    overflow: visible;
+  }
+    
+    .print-centered {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    /* Header image - perfectly centered */
+    .print-header-image {
+      text-align: center;
+      margin-bottom: 0.15cm;
+      width: 100%;
+    }
+    
+    .print-header-img {
+      max-height: 2.2cm;
+      width: auto;
+      margin: 0 auto;
+      display: block;
+    }
+    
+    /* Header section - centered title */
+    .print-header {
+      text-align: center;
+      margin-bottom: 0.2cm;
+      padding-bottom: 0.15cm;
+      border-bottom: 2px solid #1f2937;
+    }
+    
+    .print-title {
+      font-size: 13pt;
+      font-weight: bold;
+      margin: 0;
+      line-height: 1.3;
+      color: #111827;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Info section - uniform layout */
+    .print-info {
+      margin-bottom: 0.2cm;
+      font-size: 8.5pt;
+    }
+    
+    .print-info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.15cm 0.3cm;
+      align-items: baseline;
+    }
+    
+    .print-info-item {
+      display: flex;
+      align-items: baseline;
+      line-height: 1.4;
+      min-height: 0.4cm;
+    }
+    
+    .print-label {
+      font-weight: 600;
+      font-size: 8.5pt;
+      white-space: nowrap;
+      margin-right: 0.2cm;
+      flex-shrink: 0;
+    }
+    
+    .print-field {
+      flex: 1;
+      min-width: 0;
+      padding: 0 0.15cm;
+      display: inline-block;
+      text-align: left;
+      font-size: 8.5pt;
+      line-height: 1.4;
+    }
+    
+    /* Hide input borders and backgrounds in print */
+    .print-field-input,
+    .print-field-select,
+    .print-table-input,
+    .print-field-textarea {
+      border: none !important;
+      border-bottom: none !important;
+      background: transparent !important;
+      outline: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      appearance: none !important;
+      -webkit-appearance: none !important;
+    }
+    
+    /* Hide time input in print, show formatted time */
+    input[type="time"] {
+      display: none !important;
+    }
+    
+    /* Show formatted time display in print */
+    .time-display-print {
+      display: inline !important;
+      font-size: 7.5pt !important;
+      color: #111827 !important;
+    }
+    
+    /* On screen, show time input and formatted time side by side */
+    @media screen {
+      .time-display-print {
+        display: inline !important;
+      }
+    }
+    
+    .print-field-display {
+      padding: 0 0.15cm;
+    }
+    
+    /* Table - uniform formatting */
+    .print-table {
+      margin-bottom: 0.2cm;
+    }
+    
+    .print-table-main {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 7.5pt;
+      page-break-inside: avoid;
+      border: 1px solid #1f2937;
+    }
+    
+    .print-th {
+      border: 1px solid #1f2937;
+      padding: 0.12cm 0.15cm;
+      text-align: left;
+      font-weight: 600;
+      background-color: #f3f4f6;
+      font-size: 7.5pt;
+      line-height: 1.3;
+    }
+    
+    .print-td {
+      border: 1px solid #1f2937;
+      padding: 0.12cm 0.15cm;
+      text-align: left;
+      font-size: 7.5pt;
+      line-height: 1.3;
+    }
+    
+    .print-td-center {
+      text-align: center;
+    }
+    
+    /* Summary section - aligned */
+    .print-summary {
+      margin-bottom: 0.2cm;
+      font-size: 8.5pt;
+    }
+    
+    .print-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.3cm;
+      align-items: baseline;
+    }
+    
+    .print-summary-item {
+      display: flex;
+      align-items: baseline;
+      line-height: 1.4;
+    }
+    
+    /* Footer section - balanced */
+    .print-footer {
+      margin-top: 0.25cm;
+      font-size: 8.5pt;
+    }
+    
+    .print-remarks {
+      margin-bottom: 0.2cm;
+    }
+    
+    .print-remarks-box {
+      min-height: 0.6cm;
+      padding: 0.1cm 0.15cm;
+      font-size: 8.5pt;
+      line-height: 1.4;
+    }
+    
+    .print-signatures {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-top: 0.3cm;
+    }
+    
+    .print-signature-item {
+      flex: 1;
+      max-width: 45%;
+    }
+    
+    .print-signature-item .print-label {
+      margin-bottom: 0.15cm;
+      display: block;
+    }
+    
+    .print-signature-line {
+      padding-top: 0.1cm;
+      font-size: 8.5pt;
+      line-height: 1.4;
+      width: 100%;
+    }
+    
+    /* Prevent page breaks */
+    .print-container > * {
+      page-break-inside: avoid;
+    }
+    
+    table {
+      page-break-inside: auto;
+      border-collapse: collapse;
+    }
+    
+    tr {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+    
+    thead {
+      display: table-header-group;
+    }
+    
+    tfoot {
+      display: table-footer-group;
+    }
+    
+    /* Hide scrollbars */
+    * {
+      overflow: visible !important;
+    }
+    
+    /* Remove shadows and rounded corners for print */
+    * {
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+    
+    /* Portrait orientation styles */
+    .print-portrait .print-info-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.1cm 0.2cm;
+    }
+    
+    .print-portrait .print-header-image img {
+      max-height: 1.8cm;
+    }
+    
+    .print-portrait .print-table-main {
+      font-size: 7pt;
+    }
+    
+    .print-portrait .print-th,
+    .print-portrait .print-td {
+      padding: 0.08cm 0.1cm;
+      font-size: 7pt;
+    }
+    
+    /* Landscape orientation styles - compact */
+    .print-landscape .print-info-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.1cm 0.2cm;
+    }
+    
+    .print-landscape .print-header-image {
+      margin-bottom: 0.1cm;
+    }
+    
+    .print-landscape .print-header-image img {
+      max-height: 1.8cm;
+    }
+    
+    .print-landscape .print-header {
+      margin-bottom: 0.15cm;
+      padding-bottom: 0.1cm;
+    }
+    
+    .print-landscape .print-info {
+      margin-bottom: 0.15cm;
+    }
+    
+    .print-landscape .print-info-item {
+      min-height: 0.3cm;
+      line-height: 1.3;
+    }
+    
+    .print-landscape .print-table {
+      margin-bottom: 0.15cm;
+    }
+    
+    .print-landscape .print-table-main {
+      font-size: 7pt;
+    }
+    
+    .print-landscape .print-th,
+    .print-landscape .print-td {
+      padding: 0.08cm 0.1cm;
+      font-size: 7pt;
+      line-height: 1.2;
+    }
+    
+    .print-landscape .print-summary {
+      margin-bottom: 0.15cm;
+    }
+    
+    .print-landscape .print-footer {
+      margin-top: 0.2cm;
+    }
+    
+    .print-landscape .print-remarks {
+      margin-bottom: 0.15cm;
+    }
+    
+    .print-landscape .print-remarks-box {
+      min-height: 0.5cm;
+      padding: 0.08cm 0.1cm;
+    }
+    
+    .print-landscape .print-signatures {
+      margin-top: 0.2cm;
+    }
+    
+    .print-landscape .print-signature-item .print-label {
+      margin-bottom: 0.1cm;
+    }
+    
+    /* Page setup - Default to landscape */
+    @page {
+      size: A4 landscape;
+      margin: 0.5cm;
+      counter-reset: page;
+      @top-center {
+        content: none;
+      }
+      @bottom-center {
+        content: none;
+      }
+    }
+    
+    /* Ensure everything fits on one page */
+    html,
+    body {
+      height: auto;
+      overflow: visible;
+    }
+  }
+}
