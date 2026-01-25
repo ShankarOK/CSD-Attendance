@@ -174,16 +174,16 @@ export default function AdminDashboard() {
 
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-blue-600 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <Link
                 href="/"
-                className="text-white hover:text-gray-200 transition-colors"
+                className="text-white hover:text-gray-200 transition-colors flex-shrink-0"
                 title="Back to Home"
               >
                 <svg
-                  className="w-6 h-6"
+                  className="w-5 h-5 sm:w-6 sm:h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -197,17 +197,17 @@ export default function AdminDashboard() {
                 </svg>
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-                <p className="text-sm text-indigo-100">PESITM, Shimoga - CSD Department</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-white">Admin Dashboard</h1>
+                <p className="text-xs sm:text-sm text-indigo-100">PESITM, Shimoga - CSD Department</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
               {mounted && user && (
-                <span className="text-sm text-white">Welcome, {user.username}</span>
+                <span className="text-xs sm:text-sm text-white truncate">Welcome, {user.username}</span>
               )}
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm sm:text-base whitespace-nowrap"
               >
                 Logout
               </button>
@@ -217,9 +217,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="border-b border-gray-200 overflow-x-auto">
+          <nav className="-mb-px flex space-x-4 sm:space-x-8 min-w-max sm:min-w-0">
             {(['teachers', 'courses', 'semesters', 'academic-year'] as Tab[]).map((tab) => (
               <button
                 key={tab}
@@ -228,7 +228,7 @@ export default function AdminDashboard() {
                   activeTab === tab
                     ? 'border-indigo-500 text-indigo-600 font-semibold'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors duration-200`}
+                } whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors duration-200`}
               >
                 {tab.replace('-', ' ')}
               </button>
@@ -354,10 +354,10 @@ function TeachersManagement({
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">Manage Teachers</h2>
-          <p className="text-sm text-gray-500">Add, edit, or remove faculty members</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Manage Teachers</h2>
+          <p className="text-xs sm:text-sm text-gray-500">Add, edit, or remove faculty members</p>
         </div>
         <button
           onClick={() => {
@@ -365,9 +365,9 @@ function TeachersManagement({
             setEditing(null)
             setFormData({ name: '' })
           }}
-          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 font-semibold flex items-center gap-2"
+          className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2 text-sm sm:text-base"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Add Teacher
@@ -375,14 +375,14 @@ function TeachersManagement({
       </div>
 
       {showForm && (
-        <div className="bg-white p-8 rounded-xl shadow-xl border border-gray-100 mb-6 animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-xl border border-gray-100 mb-4 sm:mb-6 animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
+            <div className="p-1.5 sm:p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-gray-900">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">
               {editing ? 'Edit Teacher' : 'Add New Teacher'}
             </h3>
           </div>
@@ -396,16 +396,16 @@ function TeachersManagement({
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base"
               />
             </div>
             <p className="text-xs text-gray-500 mt-1">
               Note: All teachers can be class teachers and course faculty
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm sm:text-base"
               >
                 {editing ? 'Update' : 'Create'}
               </button>
@@ -415,7 +415,7 @@ function TeachersManagement({
                   setShowForm(false)
                   setEditing(null)
                 }}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 text-sm sm:text-base"
               >
                 Cancel
               </button>
@@ -424,7 +424,7 @@ function TeachersManagement({
         </div>
       )}
 
-      <div className="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100">
+      <div className="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100 overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
             <tr>
@@ -460,25 +460,27 @@ function TeachersManagement({
                       <span>{teacher.name}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end gap-1 sm:gap-2">
                       <button
                         onClick={() => handleEdit(teacher)}
-                        className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium flex items-center gap-1"
+                        className="px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium flex items-center gap-1 text-xs sm:text-sm"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
-                        Edit
+                        <span className="hidden sm:inline">Edit</span>
+                        <span className="sm:hidden">E</span>
                       </button>
                       <button
                         onClick={() => handleDelete(teacher.id)}
-                        className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium flex items-center gap-1"
+                        className="px-2 sm:px-4 py-1.5 sm:py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium flex items-center gap-1 text-xs sm:text-sm"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
-                        Delete
+                        <span className="hidden sm:inline">Delete</span>
+                        <span className="sm:hidden">D</span>
                       </button>
                     </div>
                   </td>
@@ -581,10 +583,10 @@ function CoursesManagement({
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">Manage Courses</h2>
-          <p className="text-sm text-gray-500">Add, edit, or remove course information</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Manage Courses</h2>
+          <p className="text-xs sm:text-sm text-gray-500">Add, edit, or remove course information</p>
         </div>
         <button
           onClick={() => {
@@ -592,9 +594,9 @@ function CoursesManagement({
             setEditing(null)
             setFormData({ semester: '', courseName: '', courseCode: '' })
           }}
-          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 font-semibold flex items-center gap-2"
+          className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2 text-sm sm:text-base"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Add Course
@@ -602,7 +604,7 @@ function CoursesManagement({
       </div>
 
       {showForm && (
-        <div className="bg-white p-8 rounded-xl shadow-xl border border-gray-100 mb-6 animate-in fade-in slide-in-from-top-2">
+        <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-xl border border-gray-100 mb-4 sm:mb-6 animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -678,20 +680,20 @@ function CoursesManagement({
         </div>
       )}
 
-      <div className="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100">
+      <div className="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100 overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Semester
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Course Code
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Course Name
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -699,36 +701,38 @@ function CoursesManagement({
           <tbody className="bg-white divide-y divide-gray-200">
             {courses.map((course) => (
               <tr key={course.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-indigo-100 text-indigo-800">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold bg-indigo-100 text-indigo-800">
                     {course.semester}{course.semester === 1 ? 'st' : course.semester === 2 ? 'nd' : course.semester === 3 ? 'rd' : 'th'}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono font-semibold text-gray-900">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm font-mono font-semibold text-gray-900">
                   {course.course_code}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-700">
+                <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-700">
                   {course.course_name}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center justify-end gap-2">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div className="flex items-center justify-end gap-1 sm:gap-2">
                     <button
                       onClick={() => handleEdit(course)}
-                      className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium flex items-center gap-1"
+                      className="px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium flex items-center gap-1 text-xs sm:text-sm"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
-                      Edit
+                      <span className="hidden sm:inline">Edit</span>
+                      <span className="sm:hidden">E</span>
                     </button>
                     <button
                       onClick={() => handleDelete(course.id)}
-                      className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium flex items-center gap-1"
+                      className="px-2 sm:px-4 py-1.5 sm:py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium flex items-center gap-1 text-xs sm:text-sm"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                      Delete
+                      <span className="hidden sm:inline">Delete</span>
+                      <span className="sm:hidden">D</span>
                     </button>
                   </div>
                 </td>
@@ -801,25 +805,25 @@ function SemestersManagement({
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">Manage Semesters</h2>
-        <p className="text-sm text-gray-500">Configure class teachers and student counts for each semester</p>
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Manage Semesters</h2>
+        <p className="text-xs sm:text-sm text-gray-500">Configure class teachers and student counts for each semester</p>
       </div>
       
-      <div className="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100">
+      <div className="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100 overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Semester
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Class Teacher
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Total Students
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -827,17 +831,17 @@ function SemestersManagement({
           <tbody className="bg-white divide-y divide-gray-200">
             {semesters.map((semester) => (
               <tr key={semester.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-purple-100 text-purple-800">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold bg-purple-100 text-purple-800">
                     {semester.semester}{semester.semester === 1 ? 'st' : semester.semester === 2 ? 'nd' : semester.semester === 3 ? 'rd' : 'th'} Semester
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                   {editing?.id === semester.id ? (
                     <select
                       value={formData.classTeacher}
                       onChange={(e) => setFormData({ ...formData, classTeacher: e.target.value })}
-                      className="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                      className="w-full sm:w-auto px-2 sm:px-3 py-1.5 sm:py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-xs sm:text-sm"
                     >
                       <option value="">Select Teacher</option>
                       {classTeachers.map((teacher) => (
@@ -850,34 +854,34 @@ function SemestersManagement({
                     semester.class_teacher
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                   {editing?.id === semester.id ? (
                     <input
                       type="number"
                       min="1"
                       value={formData.totalStudents}
                       onChange={(e) => setFormData({ ...formData, totalStudents: e.target.value })}
-                      className="w-28 px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                      className="w-20 sm:w-28 px-2 sm:px-3 py-1.5 sm:py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-xs sm:text-sm"
                     />
                   ) : (
                     semester.total_students
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   {editing?.id === semester.id ? (
-                    <div className="flex justify-end gap-2">
+                    <div className="flex flex-col sm:flex-row justify-end gap-2">
                       <button
                         onClick={handleSubmit}
-                        className="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors font-medium flex items-center gap-1"
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors font-medium flex items-center justify-center gap-1 text-xs sm:text-sm"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                         Save
                       </button>
                       <button
                         onClick={() => setEditing(null)}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-xs sm:text-sm"
                       >
                         Cancel
                       </button>
@@ -885,12 +889,13 @@ function SemestersManagement({
                   ) : (
                     <button
                       onClick={() => handleEdit(semester)}
-                      className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium flex items-center gap-1"
+                      className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium flex items-center justify-center gap-1 text-xs sm:text-sm"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
-                      Edit
+                      <span className="hidden sm:inline">Edit</span>
+                      <span className="sm:hidden">E</span>
                     </button>
                   )}
                 </td>
@@ -944,12 +949,12 @@ function AcademicYearManagement({
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">Manage Academic Year</h2>
-        <p className="text-sm text-gray-500">Set the current academic year for attendance reports</p>
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Manage Academic Year</h2>
+        <p className="text-xs sm:text-sm text-gray-500">Set the current academic year for attendance reports</p>
       </div>
       
-      <div className="bg-white p-8 rounded-xl shadow-xl border border-gray-100">
+      <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-xl border border-gray-100">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
