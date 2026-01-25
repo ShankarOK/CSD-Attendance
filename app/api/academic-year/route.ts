@@ -1,6 +1,9 @@
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
 
+// Force dynamic rendering since we query the database
+export const dynamic = 'force-dynamic';
+
 const sql = neon(process.env.DATABASE_URL!);
 
 /**

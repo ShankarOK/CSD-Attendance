@@ -2,6 +2,9 @@ import { isAuthenticated } from '@/lib/middleware';
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
 
+// Force dynamic rendering since we use authentication (cookies)
+export const dynamic = 'force-dynamic';
+
 const sql = neon(process.env.DATABASE_URL!);
 
 /**

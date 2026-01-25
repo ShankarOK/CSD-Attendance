@@ -1,6 +1,9 @@
 import { getAllSemesters, getSemesterByNumber } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
+// Force dynamic rendering since we use request.url
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/semesters
  * Fetches all semesters or a specific semester

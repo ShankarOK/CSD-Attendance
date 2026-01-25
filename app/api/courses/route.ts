@@ -1,6 +1,9 @@
 import { getAllCourses, getCoursesBySemester } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
+// Force dynamic rendering since we use request.url
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/courses
  * Fetches all courses or courses by semester

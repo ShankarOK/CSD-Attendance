@@ -1,6 +1,9 @@
 import { getAllTeachers, getClassTeachers, getCourseFaculty } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
+// Force dynamic rendering since we use request.url
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/teachers
  * Fetches teachers based on role

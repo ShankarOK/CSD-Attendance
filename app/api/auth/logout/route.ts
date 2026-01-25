@@ -1,6 +1,9 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+// Force dynamic rendering since we use cookies
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/auth/logout
  * Logout admin user
