@@ -14,6 +14,12 @@ export interface HourEntry {
   start: string;
   /** End time in HH:MM format */
   end: string;
+  /** Course code for this hour */
+  courseCode: string;
+  /** Course faculty for this hour */
+  courseFaculty: string;
+  /** Number of students present for this hour */
+  present?: number;
 }
 
 /**

@@ -1,26 +1,16 @@
-'use client'
+import type { Metadata } from 'next'
+import HomePageClient from './HomePageClient'
 
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
-
-/**
- * Landing Page Component
- * Redirects directly to the editable preview page
- */
-export default function Home() {
-  const router = useRouter()
-  
-  useEffect(() => {
-    router.push('/preview')
-  }, [router])
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-        <p className="text-gray-600">Loading...</p>
-      </div>
-    </div>
-  )
+export const metadata: Metadata = {
+  title: 'Home',
+  description: 'Welcome to Attendify - Day-Wise Attendance Report Management System for PES Institute of Technology and Management, Shimoga - Department of Computer Science and Design. Access attendance forms and admin dashboard.',
+  openGraph: {
+    title: 'Attendify - Day-Wise Attendance Report Management System',
+    description: 'Digital attendance report management system for PES Institute of Technology and Management, Shimoga - Department of Computer Science and Design.',
+    url: '/',
+  },
 }
 
+export default function Home() {
+  return <HomePageClient />
+}

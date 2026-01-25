@@ -4,13 +4,7 @@ import { AttendanceReport } from '@/lib/types'
 import {
   calculateAbsent,
   calculatePercentage,
-  COURSES,
-  FACULTY,
   getAcademicYearOptions,
-  getClassTeacherBySemester,
-  getCourseByCode,
-  getCourseByTitle,
-  getTotalStudentsBySemester,
   validateTimeRange
 } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
@@ -22,11 +16,26 @@ import Toast from './Toast'
  * Attendance Form Component
  * Handles form input, validation, and submission for attendance reports
  */
+interface Course {
+  code: string
+  title: string
+  semester: number
+}
+
+interface Teacher {
+  id: number
+  name: string
+}
+
 export default function AttendanceForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [allCourses, setAllCourses] = useState<Course[]>([])
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true)
+  const [courseFaculty, setCourseFaculty] = useState<Teacher[]>([])
+  const [isLoadingFaculty, setIsLoadingFaculty] = useState(true)
 
   const { 
     register, 
@@ -66,40 +75,74 @@ export default function AttendanceForm() {
   const totalStudents = watch('totalStudents') || 0
   const present = watch('present') || 0
   const semester = watch('semester')
-  const courseCode = watch('courseCode')
-  const courseTitle = watch('courseTitle')
-  
-  // Auto-populate class teacher when semester changes
+
+  // Fetch courses from database on mount
   useEffect(() => {
-    if (semester) {
-      const teacher = getClassTeacherBySemester(semester)
-      setValue('classTeacher', teacher)
-      
-      // Auto-populate total students when semester changes
-      const total = getTotalStudentsBySemester(semester)
-      setValue('totalStudents', total)
+    async function fetchCourses() {
+      try {
+        setIsLoadingCourses(true)
+        const response = await fetch('/api/courses')
+        if (!response.ok) {
+          throw new Error('Failed to fetch courses')
+        }
+        const courses = await response.json()
+        setAllCourses(courses)
+      } catch (error) {
+        console.error('Error fetching courses:', error)
+      } finally {
+        setIsLoadingCourses(false)
+      }
     }
+    fetchCourses()
+  }, [])
+
+  // Fetch course faculty from database on mount
+  useEffect(() => {
+    async function fetchFaculty() {
+      try {
+        setIsLoadingFaculty(true)
+        const response = await fetch('/api/teachers?role=course_faculty')
+        if (!response.ok) {
+          throw new Error('Failed to fetch faculty')
+        }
+        const faculty = await response.json()
+        setCourseFaculty(faculty)
+      } catch (error) {
+        console.error('Error fetching faculty:', error)
+      } finally {
+        setIsLoadingFaculty(false)
+      }
+    }
+    fetchFaculty()
+  }, [])
+
+  // Filter courses by selected semester
+  const coursesForSemester = semester
+    ? allCourses.filter(course => course.semester === parseInt(semester, 10))
+    : []
+  
+  // Fetch semester data and auto-populate class teacher and total students when semester changes
+  useEffect(() => {
+    async function fetchSemesterData() {
+      if (semester) {
+        try {
+          const response = await fetch(`/api/semesters?semester=${semester}`)
+          if (!response.ok) {
+            throw new Error('Failed to fetch semester data')
+          }
+          const semesterData = await response.json()
+          
+          if (semesterData) {
+            setValue('classTeacher', semesterData.class_teacher)
+            setValue('totalStudents', semesterData.total_students)
+          }
+        } catch (error) {
+          console.error('Error fetching semester data:', error)
+        }
+      }
+    }
+    fetchSemesterData()
   }, [semester, setValue])
-  
-  // Auto-populate course title when course code changes
-  useEffect(() => {
-    if (courseCode) {
-      const course = getCourseByCode(courseCode)
-      if (course) {
-        setValue('courseTitle', course.title)
-      }
-    }
-  }, [courseCode, setValue])
-  
-  // Auto-populate course code when course title changes
-  useEffect(() => {
-    if (courseTitle) {
-      const course = getCourseByTitle(courseTitle)
-      if (course) {
-        setValue('courseCode', course.code)
-      }
-    }
-  }, [courseTitle, setValue])
   
   // Get academic year options
   const academicYearOptions = getAcademicYearOptions()
@@ -300,10 +343,13 @@ export default function AttendanceForm() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     aria-invalid={errors.courseCode ? 'true' : 'false'}
                     aria-describedby={errors.courseCode ? 'courseCode-error' : undefined}
+                    disabled={isLoadingCourses || !semester}
                   >
-                    <option value="">Select Course Code</option>
-                    {COURSES.map((course) => (
-                      <option key={course.code} value={course.code}>
+                    <option value="">
+                      {isLoadingCourses ? 'Loading courses...' : !semester ? 'Select semester first' : 'Select Course Code'}
+                    </option>
+                    {coursesForSemester.map((course) => (
+                      <option key={`${course.semester}-${course.code}`} value={course.code}>
                         {course.code}
                       </option>
                     ))}
@@ -326,10 +372,13 @@ export default function AttendanceForm() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     aria-invalid={errors.courseTitle ? 'true' : 'false'}
                     aria-describedby={errors.courseTitle ? 'courseTitle-error' : undefined}
+                    disabled={isLoadingCourses || !semester}
                   >
-                    <option value="">Select Course Title</option>
-                    {COURSES.map((course) => (
-                      <option key={course.title} value={course.title}>
+                    <option value="">
+                      {isLoadingCourses ? 'Loading courses...' : !semester ? 'Select semester first' : 'Select Course Title'}
+                    </option>
+                    {coursesForSemester.map((course) => (
+                      <option key={`${course.semester}-${course.title}`} value={course.title}>
                         {course.title}
                       </option>
                     ))}
@@ -351,11 +400,14 @@ export default function AttendanceForm() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     aria-invalid={errors.courseFaculty ? 'true' : 'false'}
                     aria-describedby={errors.courseFaculty ? 'courseFaculty-error' : undefined}
+                    disabled={isLoadingFaculty}
                   >
-                    <option value="">Select Faculty</option>
-                    {FACULTY.map((faculty) => (
-                      <option key={faculty} value={faculty}>
-                        {faculty}
+                    <option value="">
+                      {isLoadingFaculty ? 'Loading faculty...' : 'Select Faculty'}
+                    </option>
+                    {courseFaculty.map((faculty) => (
+                      <option key={faculty.id} value={faculty.name}>
+                        {faculty.name}
                       </option>
                     ))}
                   </select>
