@@ -207,7 +207,7 @@ export default function AttendanceForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-6 md:py-8 px-2 sm:px-4">
       {toast && (
         <Toast
           message={toast.message}
@@ -216,24 +216,24 @@ export default function AttendanceForm() {
         />
       )}
       
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">
+      <div className="max-w-4xl mx-auto w-full">
+        <div className="bg-white rounded-lg sm:rounded-xl shadow-md p-3 sm:p-4 md:p-6 lg:p-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-2 text-center">
             Create Attendance Report
           </h1>
-          <p className="text-center text-gray-600 mb-6 text-sm">
+          <p className="text-center text-gray-600 mb-4 sm:mb-6 text-xs sm:text-sm">
             Fill in all required fields marked with <span className="text-red-500">*</span>
           </p>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6" noValidate>
             {/* Section 1: Header Details */}
-            <section className="border-b pb-6" aria-labelledby="header-details">
-              <h2 id="header-details" className="text-xl font-semibold text-gray-700 mb-4">
+            <section className="border-b pb-4 sm:pb-6" aria-labelledby="header-details">
+              <h2 id="header-details" className="text-lg sm:text-xl font-semibold text-gray-700 mb-3 sm:mb-4">
                 Header Details
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full">
                 <div>
-                  <label htmlFor="program" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="program" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Program <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <input
@@ -241,13 +241,13 @@ export default function AttendanceForm() {
                     type="text"
                     value="Bachelor in Engineering"
                     readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed text-sm sm:text-base min-h-[44px]"
                     aria-label="Program (read-only): Bachelor in Engineering"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="department" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Department <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <input
@@ -255,19 +255,19 @@ export default function AttendanceForm() {
                     type="text"
                     value="Computer Science and Design"
                     readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed text-sm sm:text-base min-h-[44px]"
                     aria-label="Department (read-only): Computer Science and Design"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="academicYear" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="academicYear" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Academic Year <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <select
                     id="academicYear"
                     {...register('academicYear', { required: 'Academic Year is required' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
                     aria-invalid={errors.academicYear ? 'true' : 'false'}
                     aria-describedby={errors.academicYear ? 'academicYear-error' : undefined}
                   >
@@ -286,13 +286,13 @@ export default function AttendanceForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="semester" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="semester" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Semester <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <select
                     id="semester"
                     {...register('semester', { required: 'Semester is required' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
                     aria-invalid={errors.semester ? 'true' : 'false'}
                     aria-describedby={errors.semester ? 'semester-error' : undefined}
                   >
@@ -312,15 +312,15 @@ export default function AttendanceForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="classTeacher" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="classTeacher" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Class Teacher <span className="text-red-500" aria-label="required">*</span>
-                    <span className="text-xs text-gray-500 ml-2">(Auto-selected based on semester)</span>
+                    <span className="block sm:inline text-xs text-gray-500 sm:ml-2 mt-0.5 sm:mt-0">(Auto-selected based on semester)</span>
                   </label>
                   <input
                     id="classTeacher"
                     type="text"
                     {...register('classTeacher', { required: 'Class Teacher is required' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
                     readOnly
                     aria-invalid={errors.classTeacher ? 'true' : 'false'}
                     aria-describedby={errors.classTeacher ? 'classTeacher-error' : undefined}
@@ -334,13 +334,13 @@ export default function AttendanceForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="courseCode" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="courseCode" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Course Code <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <select
                     id="courseCode"
                     {...register('courseCode', { required: 'Course Code is required' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
                     aria-invalid={errors.courseCode ? 'true' : 'false'}
                     aria-describedby={errors.courseCode ? 'courseCode-error' : undefined}
                     disabled={isLoadingCourses || !semester}
@@ -362,14 +362,14 @@ export default function AttendanceForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="courseTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="courseTitle" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Course Title <span className="text-red-500" aria-label="required">*</span>
-                    <span className="text-xs text-gray-500 ml-2">(Auto-filled from code)</span>
+                    <span className="block sm:inline text-xs text-gray-500 sm:ml-2 mt-0.5 sm:mt-0">(Auto-filled from code)</span>
                   </label>
                   <select
                     id="courseTitle"
                     {...register('courseTitle', { required: 'Course Title is required' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
                     aria-invalid={errors.courseTitle ? 'true' : 'false'}
                     aria-describedby={errors.courseTitle ? 'courseTitle-error' : undefined}
                     disabled={isLoadingCourses || !semester}
@@ -391,13 +391,13 @@ export default function AttendanceForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="courseFaculty" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="courseFaculty" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Course Faculty <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <select
                     id="courseFaculty"
                     {...register('courseFaculty', { required: 'Course Faculty is required' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
                     aria-invalid={errors.courseFaculty ? 'true' : 'false'}
                     aria-describedby={errors.courseFaculty ? 'courseFaculty-error' : undefined}
                     disabled={isLoadingFaculty}
@@ -419,14 +419,14 @@ export default function AttendanceForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="date" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Date <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <input
                     id="date"
                     type="date"
                     {...register('date', { required: 'Date is required' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
                     aria-invalid={errors.date ? 'true' : 'false'}
                     aria-describedby={errors.date ? 'date-error' : undefined}
                   />
@@ -438,9 +438,9 @@ export default function AttendanceForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="totalStudents" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="totalStudents" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Total Number of Students <span className="text-red-500" aria-label="required">*</span>
-                    <span className="text-xs text-gray-500 ml-2">(Auto-filled from semester, editable)</span>
+                    <span className="block sm:inline text-xs text-gray-500 sm:ml-2 mt-0.5 sm:mt-0">(Auto-filled from semester, editable)</span>
                   </label>
                   <input
                     id="totalStudents"
@@ -450,7 +450,7 @@ export default function AttendanceForm() {
                       min: { value: 1, message: 'Must be at least 1' },
                       valueAsNumber: true,
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
                     placeholder="e.g., 50"
                     aria-invalid={errors.totalStudents ? 'true' : 'false'}
                     aria-describedby={errors.totalStudents ? 'totalStudents-error' : undefined}
@@ -465,56 +465,57 @@ export default function AttendanceForm() {
             </section>
 
             {/* Section 2: Hour Table */}
-            <section className="border-b pb-6" aria-labelledby="hour-table">
-              <h2 id="hour-table" className="text-xl font-semibold text-gray-700 mb-4">
+            <section className="border-b pb-4 sm:pb-6" aria-labelledby="hour-table">
+              <h2 id="hour-table" className="text-lg sm:text-xl font-semibold text-gray-700 mb-3 sm:mb-4">
                 Hour Table (8 Hours)
               </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-300" role="table" aria-label="Hour table">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Hour No.</th>
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Room No.</th>
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Start Time</th>
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">End Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Array.from({ length: 8 }, (_, i) => {
-                      const hourStart = watch(`hours.${i}.start`)
-                      return (
-                        <tr key={i}>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{i + 1}</td>
-                          <td className="border border-gray-300 px-3 py-2">
-                            <input
-                              {...register(`hours.${i}.room`)}
-                              className="w-full px-2 py-1 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              placeholder="Room"
-                              aria-label={`Room number for hour ${i + 1}`}
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-3 py-2">
-                            <input
-                              type="time"
-                              {...register(`hours.${i}.start`)}
-                              className="w-full px-2 py-1 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              aria-label={`Start time for hour ${i + 1}`}
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-3 py-2">
-                            <input
-                              type="time"
-                              {...register(`hours.${i}.end`, {
-                                validate: (value) => {
-                                  if (!value || !hourStart) return true
-                                  return validateTimeRange(hourStart, value) || 'End time must be after start time'
-                                }
-                              })}
-                              className="w-full px-2 py-1 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              aria-label={`End time for hour ${i + 1}`}
-                            />
+              <div className="overflow-x-auto -mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 px-3 sm:px-4 md:px-6 lg:px-8">
+                <div className="inline-block min-w-full align-middle">
+                  <table className="min-w-[600px] sm:min-w-full border-collapse border border-gray-300" role="table" aria-label="Hour table">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[60px]">Hour No.</th>
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Room No.</th>
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[120px]">Start Time</th>
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[120px]">End Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: 8 }, (_, i) => {
+                        const hourStart = watch(`hours.${i}.start`)
+                        return (
+                          <tr key={i}>
+                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-xs sm:text-sm text-center font-medium">{i + 1}</td>
+                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                              <input
+                                {...register(`hours.${i}.room`)}
+                                className="w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px]"
+                                placeholder="Room"
+                                aria-label={`Room number for hour ${i + 1}`}
+                              />
+                            </td>
+                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                              <input
+                                type="time"
+                                {...register(`hours.${i}.start`)}
+                                className="w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px]"
+                                aria-label={`Start time for hour ${i + 1}`}
+                              />
+                            </td>
+                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                              <input
+                                type="time"
+                                {...register(`hours.${i}.end`, {
+                                  validate: (value) => {
+                                    if (!value || !hourStart) return true
+                                    return validateTimeRange(hourStart, value) || 'End time must be after start time'
+                                  }
+                                })}
+                                className="w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px]"
+                                aria-label={`End time for hour ${i + 1}`}
+                              />
                             {errors.hours?.[i]?.end && (
-                              <p className="text-red-500 text-xs mt-0.5" role="alert">
+                              <p className="text-red-500 text-xs mt-0.5 block" role="alert">
                                 {errors.hours[i]?.end?.message}
                               </p>
                             )}
@@ -524,17 +525,18 @@ export default function AttendanceForm() {
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             </section>
 
             {/* Section 3: Attendance Counts */}
-            <section className="border-b pb-6" aria-labelledby="attendance-counts">
-              <h2 id="attendance-counts" className="text-xl font-semibold text-gray-700 mb-4">
+            <section className="border-b pb-4 sm:pb-6" aria-labelledby="attendance-counts">
+              <h2 id="attendance-counts" className="text-lg sm:text-xl font-semibold text-gray-700 mb-3 sm:mb-4">
                 Attendance Counts
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 w-full">
                 <div>
-                  <label htmlFor="totalStudentsDisplay" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="totalStudentsDisplay" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Total Students
                   </label>
                   <input
@@ -542,13 +544,13 @@ export default function AttendanceForm() {
                     type="number"
                     value={totalStudents || ''}
                     readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-100 text-sm sm:text-base min-h-[44px]"
                     aria-label="Total students (read-only)"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="present" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="present" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Number Present <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <input
@@ -563,7 +565,7 @@ export default function AttendanceForm() {
                       },
                       valueAsNumber: true,
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
                     placeholder="0"
                     aria-invalid={errors.present ? 'true' : 'false'}
                     aria-describedby={errors.present ? 'present-error' : undefined}
@@ -576,7 +578,7 @@ export default function AttendanceForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="absent" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="absent" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Number Absent
                   </label>
                   <input
@@ -584,13 +586,13 @@ export default function AttendanceForm() {
                     type="number"
                     value={absent}
                     readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-100 text-sm sm:text-base min-h-[44px]"
                     aria-label="Number absent (auto-calculated, read-only)"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="percentage" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="percentage" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Percentage Attendance
                   </label>
                   <input
@@ -598,7 +600,7 @@ export default function AttendanceForm() {
                     type="text"
                     value={`${percentage.toFixed(2)}%`}
                     readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-100 text-sm sm:text-base min-h-[44px]"
                     aria-label={`Attendance percentage: ${percentage.toFixed(2)}% (auto-calculated, read-only)`}
                   />
                 </div>
@@ -606,20 +608,20 @@ export default function AttendanceForm() {
             </section>
 
             {/* Section 4: Signatures */}
-            <section className="pb-6" aria-labelledby="signatures">
-              <h2 id="signatures" className="text-xl font-semibold text-gray-700 mb-4">
+            <section className="pb-4 sm:pb-6" aria-labelledby="signatures">
+              <h2 id="signatures" className="text-lg sm:text-xl font-semibold text-gray-700 mb-3 sm:mb-4">
                 Signatures
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label htmlFor="remarks" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="remarks" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Remarks by HOD
                   </label>
                   <textarea
                     id="remarks"
                     {...register('remarks')}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={4}
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base resize-y min-h-[100px]"
                     placeholder="Enter remarks..."
                     aria-label="Remarks by Head of Department"
                   />
@@ -628,11 +630,11 @@ export default function AttendanceForm() {
             </section>
 
             {/* Submit Button */}
-            <div className="flex justify-end gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4 sm:pt-6">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-2.5 border-2 border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm sm:text-base font-medium min-h-[44px]"
                 aria-label="Cancel and return to home"
               >
                 Cancel
@@ -640,7 +642,7 @@ export default function AttendanceForm() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 active:bg-blue-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm sm:text-base min-h-[44px]"
                 aria-label={isSubmitting ? 'Submitting form...' : 'Submit and preview report'}
               >
                 {isSubmitting ? 'Submitting...' : 'Preview Report'}
