@@ -161,23 +161,50 @@ export default function AttendancePreview() {
 
   // Fetch course faculty from database on mount
   useEffect(() => {
+    let isCancelled = false
+    const abortController = new AbortController()
+    
     async function fetchFaculty() {
       try {
         setIsLoadingFaculty(true)
-        const response = await fetch('/api/teachers?role=course_faculty')
-        if (!response.ok) {
-          throw new Error('Failed to fetch faculty')
+        const timestamp = Date.now()
+        const random = Math.random().toString(36).substring(7)
+        const response = await fetch(`/api/teachers?role=course_faculty&_t=${timestamp}&_r=${random}`, {
+          method: 'GET',
+          cache: 'no-store',
+          signal: abortController.signal,
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'X-Request-ID': `faculty-${timestamp}-${random}`,
+          },
+        })
+        if (!isCancelled) {
+          if (!response.ok) {
+            throw new Error('Failed to fetch faculty')
+          }
+          const faculty = await response.json()
+          setCourseFaculty(faculty)
         }
-        const faculty = await response.json()
-        setCourseFaculty(faculty)
       } catch (error) {
-        console.error('Error fetching faculty:', error)
-        setToast({ message: 'Failed to load faculty from database', type: 'error' })
+        if (!isCancelled) {
+          if (error instanceof Error && error.name !== 'AbortError') {
+            console.error('Error fetching faculty:', error)
+            setToast({ message: 'Failed to load faculty from database', type: 'error' })
+          }
+        }
       } finally {
-        setIsLoadingFaculty(false)
+        if (!isCancelled) {
+          setIsLoadingFaculty(false)
+        }
       }
     }
     fetchFaculty()
+    return () => {
+      isCancelled = true
+      abortController.abort()
+    }
   }, [])
 
   // Filter courses by selected semester
