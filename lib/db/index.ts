@@ -123,12 +123,34 @@ export async function searchCourses(query: string): Promise<Course[]> {
  */
 export async function getSemesterByNumber(semester: number): Promise<Semester | null> {
   try {
+    // Ensure semester is a number
+    const semesterNum = typeof semester === 'string' ? parseInt(semester, 10) : semester;
+    if (isNaN(semesterNum)) {
+      console.error(`Invalid semester number: ${semester}`);
+      return null;
+    }
+    
     const result = await sql`
       SELECT * FROM semesters
-      WHERE semester = ${semester}
+      WHERE semester = ${semesterNum}
       LIMIT 1
     `;
-    return (result[0] as Semester) || null;
+    
+    const semesterData = (result[0] as Semester) || null;
+    
+    // Log for debugging
+    if (semesterData) {
+      console.log(`[DB] Fetched semester ${semesterNum}:`, {
+        id: semesterData.id,
+        semester: semesterData.semester,
+        class_teacher: semesterData.class_teacher,
+        total_students: semesterData.total_students,
+      });
+    } else {
+      console.warn(`[DB] No semester found for semester number: ${semesterNum}`);
+    }
+    
+    return semesterData;
   } catch (error) {
     console.error(`Error fetching semester ${semester}:`, error);
     throw error;

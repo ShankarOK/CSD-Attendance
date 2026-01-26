@@ -127,7 +127,42 @@ export default function AttendanceForm() {
           throw new Error('Failed to fetch faculty')
         }
         const faculty = await response.json()
-        setCourseFaculty(faculty)
+        
+        // Validate response is an array
+        if (!Array.isArray(faculty)) {
+          console.error('[Form] Invalid faculty response format:', typeof faculty, faculty)
+          setToast({ message: 'Invalid faculty data format. Please refresh the page.', type: 'error' })
+          setCourseFaculty([])
+          return
+        }
+        
+        // Validate and filter faculty data
+        const validFaculty = faculty.filter((f: any) => {
+          if (!f || typeof f !== 'object') {
+            console.warn('[Form] Invalid faculty item:', f)
+            return false
+          }
+          if (!f.id || !f.name) {
+            console.warn('[Form] Faculty item missing required fields:', f)
+            return false
+          }
+          return true
+        })
+        
+        // Log for debugging
+        console.log('[Form] Fetched course faculty:', {
+          total: faculty.length,
+          valid: validFaculty.length,
+          faculty: validFaculty.map((f: Teacher) => ({ id: f.id, name: f.name })),
+        })
+        
+        if (validFaculty.length === 0) {
+          console.warn('[Form] No valid faculty data received')
+          setToast({ message: 'No faculty data available. Please check the admin panel.', type: 'error' })
+          setCourseFaculty([])
+        } else {
+          setCourseFaculty(validFaculty)
+        }
       } catch (error) {
         console.error('Error fetching faculty:', error)
         setToast({ message: 'Failed to load faculty. Please refresh the page.', type: 'error' })
@@ -218,12 +253,24 @@ export default function AttendanceForm() {
           // Don't update if component unmounted or semester changed
           if (isCancelled) return
           
+          // Log for debugging
+          console.log(`[Form] Fetched semester ${semesterNum} data:`, semesterData)
+          
           // Validate response and ensure we have the correct semester
           if (semesterData && semesterData.semester === semesterNum) {
-            setValue('classTeacher', semesterData.class_teacher || '')
-            setValue('totalStudents', semesterData.total_students || 0)
+            const classTeacher = semesterData.class_teacher || ''
+            const totalStudents = semesterData.total_students || 0
+            
+            console.log(`[Form] Setting class teacher: "${classTeacher}", total students: ${totalStudents}`)
+            
+            setValue('classTeacher', classTeacher)
+            setValue('totalStudents', totalStudents)
           } else {
-            console.error('Semester data mismatch:', { requested: semesterNum, received: semesterData })
+            console.error('Semester data mismatch:', { 
+              requested: semesterNum, 
+              received: semesterData,
+              receivedSemester: semesterData?.semester 
+            })
             if (!isCancelled) {
               setValue('classTeacher', '')
               setValue('totalStudents', 0)
@@ -513,15 +560,35 @@ export default function AttendanceForm() {
                     <option value="">
                       {isLoadingFaculty ? 'Loading faculty...' : 'Select Faculty'}
                     </option>
-                    {courseFaculty.map((faculty) => (
-                      <option key={faculty.id} value={faculty.name}>
-                        {faculty.name}
-                      </option>
-                    ))}
+                    {courseFaculty.length > 0 ? (
+                      courseFaculty.map((faculty) => {
+                        // Validate faculty data
+                        if (!faculty || !faculty.id || !faculty.name) {
+                          console.warn('[Form] Invalid faculty data:', faculty);
+                          return null;
+                        }
+                        return (
+                          <option key={faculty.id} value={faculty.name}>
+                            {faculty.name}
+                          </option>
+                        );
+                      }).filter(Boolean)
+                    ) : (
+                      !isLoadingFaculty && (
+                        <option value="" disabled>
+                          No faculty available
+                        </option>
+                      )
+                    )}
                   </select>
                   {errors.courseFaculty && (
                     <p id="courseFaculty-error" className="text-red-500 text-xs mt-1" role="alert">
                       {errors.courseFaculty.message}
+                    </p>
+                  )}
+                  {courseFaculty.length === 0 && !isLoadingFaculty && (
+                    <p className="text-yellow-600 text-xs mt-1">
+                      No faculty found. Please check the database or refresh the page.
                     </p>
                   )}
                 </div>

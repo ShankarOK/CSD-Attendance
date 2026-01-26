@@ -30,6 +30,12 @@ export async function GET(request: Request) {
       name: teacher.name,
     }));
 
+    // Log for debugging - remove in production if needed
+    console.log(`[API] Teachers for role "${role || 'all'}":`, {
+      count: transformedTeachers.length,
+      teachers: transformedTeachers.map(t => t.name),
+    });
+
     // Ensure no caching for dynamic teacher data
     return NextResponse.json(transformedTeachers, {
       headers: {

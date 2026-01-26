@@ -17,18 +17,40 @@ export async function GET(request: Request) {
     if (semesterParam) {
       const semester = parseInt(semesterParam, 10);
       if (isNaN(semester)) {
+        console.error(`[API] Invalid semester parameter: ${semesterParam}`);
         return NextResponse.json(
           { error: 'Invalid semester parameter' },
           { status: 400 }
         );
       }
+      
+      console.log(`[API] Fetching semester ${semester}...`);
       const semesterData = await getSemesterByNumber(semester);
+      
       if (!semesterData) {
+        console.error(`[API] Semester ${semester} not found in database`);
         return NextResponse.json(
           { error: 'Semester not found' },
           { status: 404 }
         );
       }
+      
+      // Validate the returned data matches the requested semester
+      if (semesterData.semester !== semester) {
+        console.error(`[API] Semester mismatch! Requested: ${semester}, Got: ${semesterData.semester}`);
+        return NextResponse.json(
+          { error: 'Semester data mismatch' },
+          { status: 500 }
+        );
+      }
+      
+      // Log for debugging
+      console.log(`[API] Returning semester ${semester} data:`, {
+        semester: semesterData.semester,
+        class_teacher: semesterData.class_teacher,
+        total_students: semesterData.total_students,
+      });
+      
       // Ensure no caching for dynamic semester data
       return NextResponse.json(semesterData, {
         headers: {
