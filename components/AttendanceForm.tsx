@@ -88,13 +88,16 @@ export default function AttendanceForm() {
         setIsLoadingCourses(true)
         // Add cache-busting to ensure fresh data
         const timestamp = Date.now()
-        const response = await fetch(`/api/courses?_t=${timestamp}`, {
+        const random = Math.random().toString(36).substring(7)
+        const response = await fetch(`/api/courses?_t=${timestamp}&_r=${random}`, {
+          method: 'GET',
           cache: 'no-store',
           signal: abortController.signal,
           headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Cache-Control': 'no-cache, no-store, must-revalidate, proxy-revalidate',
             'Pragma': 'no-cache',
             'Expires': '0',
+            'X-Request-ID': `${timestamp}-${random}`,
           },
         })
         if (!response.ok) {
@@ -136,13 +139,16 @@ export default function AttendanceForm() {
         setIsLoadingFaculty(true)
         // Add cache-busting to ensure fresh data
         const timestamp = Date.now()
-        const response = await fetch(`/api/teachers?role=course_faculty&_t=${timestamp}`, {
+        const random = Math.random().toString(36).substring(7)
+        const response = await fetch(`/api/teachers?role=course_faculty&_t=${timestamp}&_r=${random}`, {
+          method: 'GET',
           cache: 'no-store',
           signal: abortController.signal,
           headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Cache-Control': 'no-cache, no-store, must-revalidate, proxy-revalidate',
             'Pragma': 'no-cache',
             'Expires': '0',
+            'X-Request-ID': `${timestamp}-${random}`,
           },
         })
         if (!response.ok) {
@@ -277,14 +283,17 @@ export default function AttendanceForm() {
             return
           }
           
-          // Add timestamp to prevent caching
+          // Add timestamp and random string to prevent caching
           const timestamp = Date.now()
-          const response = await fetch(`/api/semesters?semester=${semesterNum}&_t=${timestamp}`, {
+          const random = Math.random().toString(36).substring(7)
+          const response = await fetch(`/api/semesters?semester=${semesterNum}&_t=${timestamp}&_r=${random}`, {
+            method: 'GET',
             cache: 'no-store',
             headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Cache-Control': 'no-cache, no-store, must-revalidate, proxy-revalidate',
               'Pragma': 'no-cache',
               'Expires': '0',
+              'X-Request-ID': `${timestamp}-${random}`,
             },
           })
           
@@ -521,6 +530,8 @@ export default function AttendanceForm() {
                     {...register('classTeacher', { required: 'Class Teacher is required' })}
                     className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
                     readOnly
+                    placeholder="Select semester to auto-fill"
+                    value={watch('classTeacher') || ''}
                     aria-invalid={errors.classTeacher ? 'true' : 'false'}
                     aria-describedby={errors.classTeacher ? 'classTeacher-error' : undefined}
                     aria-label="Class Teacher (auto-selected based on semester)"
