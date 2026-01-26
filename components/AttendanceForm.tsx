@@ -80,6 +80,9 @@ export default function AttendanceForm() {
 
   // Fetch courses from database on mount
   useEffect(() => {
+    let isCancelled = false
+    const abortController = new AbortController()
+    
     async function fetchCourses() {
       try {
         setIsLoadingCourses(true)
@@ -87,6 +90,7 @@ export default function AttendanceForm() {
         const timestamp = Date.now()
         const response = await fetch(`/api/courses?_t=${timestamp}`, {
           cache: 'no-store',
+          signal: abortController.signal,
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
@@ -97,19 +101,36 @@ export default function AttendanceForm() {
           throw new Error('Failed to fetch courses')
         }
         const courses = await response.json()
-        setAllCourses(courses)
-      } catch (error) {
+        if (!isCancelled) {
+          setAllCourses(courses)
+        }
+      } catch (error: any) {
+        if (error.name === 'AbortError') {
+          return // Request was cancelled
+        }
         console.error('Error fetching courses:', error)
-        setToast({ message: 'Failed to load courses. Please refresh the page.', type: 'error' })
+        if (!isCancelled) {
+          setToast({ message: 'Failed to load courses. Please refresh the page.', type: 'error' })
+        }
       } finally {
-        setIsLoadingCourses(false)
+        if (!isCancelled) {
+          setIsLoadingCourses(false)
+        }
       }
     }
     fetchCourses()
+    
+    return () => {
+      isCancelled = true
+      abortController.abort()
+    }
   }, [])
 
   // Fetch course faculty from database on mount
   useEffect(() => {
+    let isCancelled = false
+    const abortController = new AbortController()
+    
     async function fetchFaculty() {
       try {
         setIsLoadingFaculty(true)
@@ -117,6 +138,7 @@ export default function AttendanceForm() {
         const timestamp = Date.now()
         const response = await fetch(`/api/teachers?role=course_faculty&_t=${timestamp}`, {
           cache: 'no-store',
+          signal: abortController.signal,
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
@@ -128,11 +150,15 @@ export default function AttendanceForm() {
         }
         const faculty = await response.json()
         
+        if (isCancelled) return
+        
         // Validate response is an array
         if (!Array.isArray(faculty)) {
           console.error('[Form] Invalid faculty response format:', typeof faculty, faculty)
-          setToast({ message: 'Invalid faculty data format. Please refresh the page.', type: 'error' })
-          setCourseFaculty([])
+          if (!isCancelled) {
+            setToast({ message: 'Invalid faculty data format. Please refresh the page.', type: 'error' })
+            setCourseFaculty([])
+          }
           return
         }
         
@@ -149,6 +175,8 @@ export default function AttendanceForm() {
           return true
         })
         
+        if (isCancelled) return
+        
         // Log for debugging
         console.log('[Form] Fetched course faculty:', {
           total: faculty.length,
@@ -158,19 +186,35 @@ export default function AttendanceForm() {
         
         if (validFaculty.length === 0) {
           console.warn('[Form] No valid faculty data received')
-          setToast({ message: 'No faculty data available. Please check the admin panel.', type: 'error' })
-          setCourseFaculty([])
+          if (!isCancelled) {
+            setToast({ message: 'No faculty data available. Please check the admin panel.', type: 'error' })
+            setCourseFaculty([])
+          }
         } else {
-          setCourseFaculty(validFaculty)
+          if (!isCancelled) {
+            setCourseFaculty(validFaculty)
+          }
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error.name === 'AbortError') {
+          return // Request was cancelled
+        }
         console.error('Error fetching faculty:', error)
-        setToast({ message: 'Failed to load faculty. Please refresh the page.', type: 'error' })
+        if (!isCancelled) {
+          setToast({ message: 'Failed to load faculty. Please refresh the page.', type: 'error' })
+        }
       } finally {
-        setIsLoadingFaculty(false)
+        if (!isCancelled) {
+          setIsLoadingFaculty(false)
+        }
       }
     }
     fetchFaculty()
+    
+    return () => {
+      isCancelled = true
+      abortController.abort()
+    }
   }, [])
 
   // Filter courses by selected semester
@@ -560,26 +604,19 @@ export default function AttendanceForm() {
                     <option value="">
                       {isLoadingFaculty ? 'Loading faculty...' : 'Select Faculty'}
                     </option>
-                    {courseFaculty.length > 0 ? (
-                      courseFaculty.map((faculty) => {
-                        // Validate faculty data
-                        if (!faculty || !faculty.id || !faculty.name) {
-                          console.warn('[Form] Invalid faculty data:', faculty);
-                          return null;
-                        }
-                        return (
-                          <option key={faculty.id} value={faculty.name}>
-                            {faculty.name}
+                    {courseFaculty.length > 0
+                      ? courseFaculty
+                          .filter((faculty) => faculty && faculty.id && faculty.name)
+                          .map((faculty) => (
+                            <option key={faculty.id} value={faculty.name}>
+                              {faculty.name}
+                            </option>
+                          ))
+                      : !isLoadingFaculty && (
+                          <option value="" disabled>
+                            No faculty available
                           </option>
-                        );
-                      }).filter(Boolean)
-                    ) : (
-                      !isLoadingFaculty && (
-                        <option value="" disabled>
-                          No faculty available
-                        </option>
-                      )
-                    )}
+                        )}
                   </select>
                   {errors.courseFaculty && (
                     <p id="courseFaculty-error" className="text-red-500 text-xs mt-1" role="alert">
