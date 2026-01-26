@@ -75,13 +75,24 @@ export default function AttendanceForm() {
   const totalStudents = watch('totalStudents') || 0
   const present = watch('present') || 0
   const semester = watch('semester')
+  const courseCode = watch('courseCode')
+  const courseTitle = watch('courseTitle')
 
   // Fetch courses from database on mount
   useEffect(() => {
     async function fetchCourses() {
       try {
         setIsLoadingCourses(true)
-        const response = await fetch('/api/courses')
+        // Add cache-busting to ensure fresh data
+        const timestamp = Date.now()
+        const response = await fetch(`/api/courses?_t=${timestamp}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        })
         if (!response.ok) {
           throw new Error('Failed to fetch courses')
         }
@@ -89,6 +100,7 @@ export default function AttendanceForm() {
         setAllCourses(courses)
       } catch (error) {
         console.error('Error fetching courses:', error)
+        setToast({ message: 'Failed to load courses. Please refresh the page.', type: 'error' })
       } finally {
         setIsLoadingCourses(false)
       }
@@ -101,7 +113,16 @@ export default function AttendanceForm() {
     async function fetchFaculty() {
       try {
         setIsLoadingFaculty(true)
-        const response = await fetch('/api/teachers?role=course_faculty')
+        // Add cache-busting to ensure fresh data
+        const timestamp = Date.now()
+        const response = await fetch(`/api/teachers?role=course_faculty&_t=${timestamp}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        })
         if (!response.ok) {
           throw new Error('Failed to fetch faculty')
         }
@@ -109,6 +130,7 @@ export default function AttendanceForm() {
         setCourseFaculty(faculty)
       } catch (error) {
         console.error('Error fetching faculty:', error)
+        setToast({ message: 'Failed to load faculty. Please refresh the page.', type: 'error' })
       } finally {
         setIsLoadingFaculty(false)
       }
@@ -120,28 +142,114 @@ export default function AttendanceForm() {
   const coursesForSemester = semester
     ? allCourses.filter(course => course.semester === parseInt(semester, 10))
     : []
+
+  // Clear course fields when semester changes
+  useEffect(() => {
+    if (semester && !isLoadingCourses) {
+      // Clear course fields when semester changes to prevent stale data
+      setValue('courseCode', '')
+      setValue('courseTitle', '')
+    }
+  }, [semester, isLoadingCourses, setValue])
+
+  // Auto-sync course code and course title when one changes
+  useEffect(() => {
+    if (!semester || coursesForSemester.length === 0 || isLoadingCourses) return
+
+    // Find matching course based on current selections
+    const courseByCode = courseCode ? coursesForSemester.find(c => c.code === courseCode) : null
+    const courseByTitle = courseTitle ? coursesForSemester.find(c => c.title === courseTitle) : null
+
+    // When course code is selected, auto-fill course title
+    if (courseCode && courseByCode) {
+      if (courseByCode.title !== courseTitle) {
+        setValue('courseTitle', courseByCode.title, { shouldValidate: true, shouldDirty: true })
+      }
+    }
+
+    // When course title is selected, auto-fill course code
+    if (courseTitle && courseByTitle) {
+      if (courseByTitle.code !== courseCode) {
+        setValue('courseCode', courseByTitle.code, { shouldValidate: true, shouldDirty: true })
+      }
+    }
+
+    // If both are set but don't match, prioritize course code
+    if (courseCode && courseTitle && courseByCode && courseByCode.title !== courseTitle) {
+      setValue('courseTitle', courseByCode.title, { shouldValidate: true, shouldDirty: true })
+    }
+  }, [courseCode, courseTitle, coursesForSemester, semester, isLoadingCourses, setValue])
   
   // Fetch semester data and auto-populate class teacher and total students when semester changes
   useEffect(() => {
+    let isCancelled = false
+    
     async function fetchSemesterData() {
       if (semester) {
         try {
-          const response = await fetch(`/api/semesters?semester=${semester}`)
-          if (!response.ok) {
-            throw new Error('Failed to fetch semester data')
+          // Clear previous values first to prevent stale data
+          setValue('classTeacher', '')
+          setValue('totalStudents', 0)
+          
+          // Add cache-busting and ensure fresh data
+          const semesterNum = parseInt(semester, 10)
+          if (isNaN(semesterNum)) {
+            console.error('Invalid semester value:', semester)
+            return
           }
+          
+          // Add timestamp to prevent caching
+          const timestamp = Date.now()
+          const response = await fetch(`/api/semesters?semester=${semesterNum}&_t=${timestamp}`, {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0',
+            },
+          })
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch semester data: ${response.status}`)
+          }
+          
           const semesterData = await response.json()
           
-          if (semesterData) {
-            setValue('classTeacher', semesterData.class_teacher)
-            setValue('totalStudents', semesterData.total_students)
+          // Don't update if component unmounted or semester changed
+          if (isCancelled) return
+          
+          // Validate response and ensure we have the correct semester
+          if (semesterData && semesterData.semester === semesterNum) {
+            setValue('classTeacher', semesterData.class_teacher || '')
+            setValue('totalStudents', semesterData.total_students || 0)
+          } else {
+            console.error('Semester data mismatch:', { requested: semesterNum, received: semesterData })
+            if (!isCancelled) {
+              setValue('classTeacher', '')
+              setValue('totalStudents', 0)
+            }
           }
         } catch (error) {
           console.error('Error fetching semester data:', error)
+          // Clear values on error to prevent stale data
+          if (!isCancelled) {
+            setValue('classTeacher', '')
+            setValue('totalStudents', 0)
+          }
         }
+      } else {
+        // Clear values when no semester is selected
+        setValue('classTeacher', '')
+        setValue('totalStudents', 0)
       }
     }
+    
     fetchSemesterData()
+    
+    // Cleanup function to cancel in-flight requests
+    return () => {
+      isCancelled = true
+    }
   }, [semester, setValue])
   
   // Get academic year options

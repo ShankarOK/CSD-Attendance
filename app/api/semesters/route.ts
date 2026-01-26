@@ -29,7 +29,14 @@ export async function GET(request: Request) {
           { status: 404 }
         );
       }
-      return NextResponse.json(semesterData);
+      // Ensure no caching for dynamic semester data
+      return NextResponse.json(semesterData, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      });
     } else {
       const semesters = await getAllSemesters();
       return NextResponse.json(semesters);

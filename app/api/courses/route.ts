@@ -36,7 +36,14 @@ export async function GET(request: Request) {
       semester: course.semester,
     }));
 
-    return NextResponse.json(transformedCourses);
+    // Ensure no caching for dynamic course data
+    return NextResponse.json(transformedCourses, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     console.error('Error fetching courses:', error);
     return NextResponse.json(

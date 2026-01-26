@@ -30,7 +30,14 @@ export async function GET(request: Request) {
       name: teacher.name,
     }));
 
-    return NextResponse.json(transformedTeachers);
+    // Ensure no caching for dynamic teacher data
+    return NextResponse.json(transformedTeachers, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     console.error('Error fetching teachers:', error);
     return NextResponse.json(
