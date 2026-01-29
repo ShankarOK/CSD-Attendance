@@ -1,5 +1,4 @@
 import AdminDashboard from '@/components/AdminDashboard'
-import { requireAuth } from '@/lib/middleware'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -14,8 +13,6 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminPage() {
-  await requireAuth()
-  
   return <AdminDashboard />
 }
 

@@ -13,7 +13,6 @@
  */
 
 import { getOrCreateDayAttendance, getSessionsByDayAttendanceId, getTeacherByName } from '@/lib/db';
-import { getCurrentUser } from '@/lib/middleware';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -22,10 +21,6 @@ export const fetchCache = 'force-no-store';
 
 export async function POST(request: Request) {
   try {
-    // Check authentication (optional - can be removed if teachers don't need to login)
-    // For now, we'll allow unauthenticated requests but log them
-    const user = await getCurrentUser();
-    
     const body = await request.json();
     const {
       date,

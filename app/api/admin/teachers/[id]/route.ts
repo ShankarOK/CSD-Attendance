@@ -1,8 +1,6 @@
-import { isAuthenticated } from '@/lib/middleware';
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
 
-// Force dynamic rendering since we use authentication (cookies)
 export const dynamic = 'force-dynamic';
 
 const sql = neon(process.env.DATABASE_URL!);
@@ -16,13 +14,6 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
     
     const { name } = await request.json();
     const id = parseInt(params.id);
@@ -74,13 +65,6 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
     
     const id = parseInt(params.id);
     

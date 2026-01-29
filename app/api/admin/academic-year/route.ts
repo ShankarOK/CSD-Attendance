@@ -1,8 +1,6 @@
-import { isAuthenticated } from '@/lib/middleware';
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
 
-// Force dynamic rendering since we use authentication (cookies)
 export const dynamic = 'force-dynamic';
 
 const sql = neon(process.env.DATABASE_URL!);
@@ -13,13 +11,6 @@ const sql = neon(process.env.DATABASE_URL!);
  */
 export async function GET() {
   try {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
     
     const result = await sql`
       SELECT * FROM academic_year_settings
@@ -48,13 +39,6 @@ export async function GET() {
  */
 export async function POST(request: Request) {
   try {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
     
     const { currentAcademicYear } = await request.json();
     
