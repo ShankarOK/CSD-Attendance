@@ -1,42 +1,101 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { verifyToken } from './lib/auth'
 
 /**
- * Maintenance Mode Middleware
+ * Unified Authentication & Maintenance Mode Middleware
  * 
  * Environment Variables Required:
  * - MAINTENANCE_MODE: 'true' | 'false' (default: 'false')
  * - MAINTENANCE_SECRET: Secret key for admin bypass
+ * - JWT_SECRET: Secret key for JWT tokens
  * 
  * Behavior:
- * - If MAINTENANCE_MODE=false → Site works normally
- * - If MAINTENANCE_MODE=true → Redirect public users to /maintenance
- * - Admin can bypass by visiting /admin-bypass?key=<MAINTENANCE_SECRET>
- * - Cookie maintenance_bypass=true allows full access
+ * 1. Authentication Check:
+ *    - All routes except public ones require authentication
+ *    - Unauthenticated users are redirected to /login
+ * 
+ * 2. Maintenance Mode:
+ *    - If MAINTENANCE_MODE=true → Redirect public users to /maintenance
+ *    - Admin can bypass by visiting /admin-bypass?key=<MAINTENANCE_SECRET>
+ *    - Cookie maintenance_bypass=true allows full access
  */
 export function middleware(request: NextRequest) {
-  const maintenanceMode = process.env.MAINTENANCE_MODE === 'true'
-  const maintenanceSecret = process.env.MAINTENANCE_SECRET || ''
+  const { pathname } = request.nextUrl
   
-  // If maintenance mode is OFF, allow all requests
+  // Public paths that don't require authentication
+  const publicPaths = [
+    '/login',                  // Login page
+    '/maintenance',            // Maintenance page
+    '/admin-bypass',          // Admin bypass route
+    '/_next',                 // Next.js internal files
+    '/api/auth/login',        // Login API
+    '/api/auth/logout',       // Logout API
+    '/api/auth/me',           // Auth check API
+    '/api/maintenance/bypass', // Maintenance bypass API
+  ]
+
+  // Check if path is public
+  const isPublicPath = publicPaths.some(path => 
+    pathname === path || pathname.startsWith(path)
+  )
+
+  // If public path, skip authentication check
+  if (isPublicPath) {
+    // Still check maintenance mode for public paths
+    return handleMaintenanceMode(request)
+  }
+
+  // Check authentication for protected paths
+  const authToken = request.cookies.get('auth_token')?.value
+  
+  if (!authToken) {
+    // Not authenticated - redirect to login with return URL
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // Verify token
+  const decoded = verifyToken(authToken)
+  if (!decoded) {
+    // Invalid token - redirect to login
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    const response = NextResponse.redirect(loginUrl)
+    // Clear invalid token
+    response.cookies.delete('auth_token')
+    return response
+  }
+
+  // Authenticated - check maintenance mode
+  return handleMaintenanceMode(request)
+}
+
+/**
+ * Handle maintenance mode check
+ */
+function handleMaintenanceMode(request: NextRequest) {
+  const maintenanceMode = process.env.MAINTENANCE_MODE === 'true'
+  
+  // If maintenance mode is OFF, allow request
   if (!maintenanceMode) {
     return NextResponse.next()
   }
 
   const { pathname } = request.nextUrl
 
-  // Always allow these paths (no redirect)
+  // Always allow these paths during maintenance
   const allowedPaths = [
-    '/maintenance',           // Maintenance page itself
-    '/admin-bypass',          // Admin bypass route
-    '/_next',                 // Next.js internal files
-    '/api/auth/login',        // Allow admin login during maintenance
-    '/api/auth/logout',       // Allow logout
-    '/api/auth/me',           // Allow auth check
-    '/api/maintenance/bypass', // Allow bypass API
+    '/maintenance',
+    '/admin-bypass',
+    '/_next',
+    '/api/auth/login',
+    '/api/auth/logout',
+    '/api/auth/me',
+    '/api/maintenance/bypass',
   ]
 
-  // Check if path should be allowed
   const isAllowedPath = allowedPaths.some(path => 
     pathname === path || pathname.startsWith(path)
   )
@@ -51,9 +110,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Redirect all other requests to maintenance page
+  // Redirect to maintenance page
   const maintenanceUrl = new URL('/maintenance', request.url)
-  // Preserve the original URL as a query parameter for redirect after maintenance
   maintenanceUrl.searchParams.set('redirect', pathname)
   
   return NextResponse.redirect(maintenanceUrl)

@@ -124,7 +124,7 @@ export default function AdminDashboard() {
       try {
         const response = await fetch('/api/auth/me')
         if (!response.ok) {
-          router.push('/admin/login')
+          router.push('/login')
           return
         }
         const data = await response.json()
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
-      router.push('/admin/login')
+      router.push('/login')
       router.refresh()
     } catch (error) {
       console.error('Logout error:', error)

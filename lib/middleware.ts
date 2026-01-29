@@ -12,7 +12,7 @@ import { verifyToken } from './auth';
 export async function isAuthenticated(): Promise<boolean> {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('admin_token')?.value;
+    const token = cookieStore.get('auth_token')?.value;
 
     if (!token) {
       return false;
@@ -33,7 +33,7 @@ export async function requireAuth(): Promise<true> {
   const authenticated = await isAuthenticated();
   
   if (!authenticated) {
-    redirect('/admin/login');
+    redirect('/login');
   }
   
   return true;
@@ -45,7 +45,7 @@ export async function requireAuth(): Promise<true> {
 export async function getCurrentUser(): Promise<{ userId: number; username: string } | null> {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('admin_token')?.value;
+    const token = cookieStore.get('auth_token')?.value;
 
     if (!token) {
       return null;

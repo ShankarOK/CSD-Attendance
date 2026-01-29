@@ -31,9 +31,9 @@ export async function POST(request: Request) {
 
     const token = generateToken(user.id, user.username);
 
-    // Set HTTP-only cookie
+    // Set HTTP-only cookie (unified auth token)
     const cookieStore = await cookies();
-    cookieStore.set('admin_token', token, {
+    cookieStore.set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

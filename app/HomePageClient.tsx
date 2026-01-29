@@ -57,7 +57,7 @@ export default function HomePageClient() {
       if (isAdmin) {
         router.push('/admin')
       } else {
-        router.push('/admin/login')
+        router.push('/login')
       }
     }
   }
