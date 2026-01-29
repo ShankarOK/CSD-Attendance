@@ -33,8 +33,21 @@ export async function POST(request: Request) {
 
     const token = generateToken(user.id, user.username);
 
-    // Create response first
-    const response = NextResponse.json({
+    // Set HTTP-only cookie using cookies() from next/headers
+    // This is the correct way in Next.js 14 App Router
+    const cookieStore = await cookies();
+    cookieStore.set('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    });
+
+    // Log for debugging
+    console.log('[Login API] Cookie set successfully for user:', user.username);
+
+    return NextResponse.json({
       success: true,
       user: { id: user.id, username: user.username },
     }, {
@@ -43,22 +56,7 @@ export async function POST(request: Request) {
         'Pragma': 'no-cache',
         'Expires': '0',
       },
-    })
-
-    // Set HTTP-only cookie on the response object
-    // Important: In Next.js App Router, cookies must be set on the response object
-    response.cookies.set('auth_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    })
-    
-    // Log for debugging (remove in production if needed)
-    console.log('[Login API] Cookie set successfully for user:', user.username)
-
-    return response;
+    });
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

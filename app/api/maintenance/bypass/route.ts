@@ -48,26 +48,24 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create response first
-    const response = NextResponse.json({
+    // Set bypass cookie using cookies() from next/headers
+    const cookieStore = await cookies();
+    cookieStore.set('maintenance_bypass', 'true', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    });
+
+    return NextResponse.json({
       success: true,
       message: 'Maintenance bypass activated',
     }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
-    })
-
-    // Set bypass cookie on response object
-    response.cookies.set('maintenance_bypass', 'true', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    })
-
-    return response
+    });
   } catch (error) {
     console.error('Error in maintenance bypass:', error)
     return NextResponse.json(

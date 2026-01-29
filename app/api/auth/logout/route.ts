@@ -10,12 +10,10 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST() {
   try {
-    const response = NextResponse.json({ success: true })
-    
-    // Delete cookie from response
-    response.cookies.delete('auth_token')
+    const cookieStore = await cookies();
+    cookieStore.delete('auth_token');
 
-    return response
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Logout error:', error);
     return NextResponse.json(
