@@ -1234,19 +1234,9 @@ export default function AttendanceForm() {
                 Signatures
               </h2>
               <div className="space-y-3 sm:space-y-4">
-                <div>
-                  <label htmlFor="remarks" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                    Remarks by HOD
-                  </label>
-                  <textarea
-                    id="remarks"
-                    {...register('remarks')}
-                    rows={4}
-                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base resize-y min-h-[100px]"
-                    placeholder="Enter remarks..."
-                    aria-label="Remarks by Head of Department"
-                  />
-                </div>
+                <p className="text-sm text-gray-600 italic">
+                  Note: HOD remarks can be added in the preview/print view after finalizing the day attendance.
+                </p>
               </div>
             </section>
 
