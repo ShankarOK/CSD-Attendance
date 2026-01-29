@@ -60,11 +60,12 @@ function LoginContent() {
       setToast({ message: 'Login successful! Redirecting...', type: 'success' })
       
       // Redirect to intended destination or home
+      // Use window.location for redirect to ensure cookie is available
       const redirectTo = searchParams?.get('redirect') || '/'
       setTimeout(() => {
-        router.push(redirectTo)
-        router.refresh()
-      }, 500)
+        // Use window.location instead of router.push to ensure cookie is available
+        window.location.href = redirectTo
+      }, 800)
     } catch (error: any) {
       console.error('Login error:', error)
       if (error.name === 'AbortError') {
