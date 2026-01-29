@@ -6,7 +6,7 @@ import {
   calculatePercentage,
   validateTimeRange
 } from '@/lib/utils'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import Toast from './Toast'
@@ -28,6 +28,8 @@ interface Teacher {
 
 export default function AttendanceForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const urlDayAttendanceId = searchParams?.get('dayAttendanceId')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -277,6 +279,100 @@ export default function AttendanceForm() {
     }
   }, [semester, isLoadingCourses, setValue])
 
+  // Load day attendance from URL parameter if present
+  useEffect(() => {
+    let isCancelled = false
+    
+    async function loadDayAttendanceFromUrl() {
+      if (!urlDayAttendanceId) {
+        return // No URL parameter, use normal flow
+      }
+
+      try {
+        setIsLoadingDayAttendance(true)
+        const response = await fetch(`/api/attendance/day/${urlDayAttendanceId}`)
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || 'Failed to load day attendance')
+        }
+
+        const data = await response.json()
+        const { dayAttendance, sessions } = data
+        
+        if (!isCancelled) {
+          // Set day attendance state
+          setDayAttendanceId(dayAttendance.id)
+          setDayAttendanceStatus(dayAttendance.status)
+          
+          // Populate form fields
+          setValue('date', dayAttendance.date)
+          setValue('semester', dayAttendance.semester.toString())
+          setValue('academicYear', dayAttendance.academic_year)
+          setValue('classTeacher', dayAttendance.classTeacherName)
+          setValue('totalStudents', dayAttendance.total_students)
+          setValue('program', dayAttendance.program)
+          setValue('department', dayAttendance.department)
+          
+          // Load saved sessions into form
+          const savedHours = new Set<number>()
+          sessions.forEach((session: any) => {
+            const hourIndex = session.hour_no - 1
+            savedHours.add(hourIndex)
+            
+            // Populate form fields
+            setValue(`hours.${hourIndex}.room`, session.room_no || '')
+            setValue(`hours.${hourIndex}.start`, session.start_time.substring(0, 5)) // Convert HH:MM:SS to HH:MM
+            setValue(`hours.${hourIndex}.end`, session.end_time.substring(0, 5))
+            setValue(`hours.${hourIndex}.courseCode`, session.course_code || '')
+            // Set faculty ID (the dropdown uses faculty.id as value)
+            setValue(`hours.${hourIndex}.courseFaculty`, session.faculty_id?.toString() || '')
+            setValue(`hours.${hourIndex}.present`, session.students_present || 0)
+          })
+          
+          setSavedSessions(savedHours)
+          
+          if (sessions.length > 0) {
+            setToast({ 
+              message: `Loaded ${sessions.length} saved session(s) from day attendance`, 
+              type: 'success' 
+            })
+          } else if (dayAttendance.status === 'DRAFT') {
+            setToast({ 
+              message: 'Day attendance loaded. Start filling session details.', 
+              type: 'info' 
+            })
+          }
+          
+          if (dayAttendance.status === 'FINALIZED') {
+            setToast({ 
+              message: 'This day attendance is finalized. You can view it but cannot edit.', 
+              type: 'warning' 
+            })
+          }
+        }
+      } catch (error: any) {
+        console.error('Error loading day attendance from URL:', error)
+        if (!isCancelled) {
+          setToast({ 
+            message: error.message || 'Failed to load day attendance. Please try again.', 
+            type: 'error' 
+          })
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingDayAttendance(false)
+        }
+      }
+    }
+
+    loadDayAttendanceFromUrl()
+    
+    return () => {
+      isCancelled = true
+    }
+  }, [urlDayAttendanceId, setValue])
+
   // Auto-sync course code and course title when one changes
   useEffect(() => {
     if (!semester || coursesForSemester.length === 0 || isLoadingCourses) return
@@ -307,8 +403,14 @@ export default function AttendanceForm() {
 
   // Auto-load day attendance when date + semester + academic year selected
   // This triggers after classTeacher and totalStudents are populated from semester selection
+  // Skip this if we already loaded from URL parameter
   useEffect(() => {
     let isCancelled = false
+    
+    // Skip if we already have dayAttendanceId from URL
+    if (urlDayAttendanceId) {
+      return
+    }
     
     async function loadDayAttendance() {
       // Wait for classTeacher and totalStudents to be populated from semester selection
@@ -411,7 +513,7 @@ export default function AttendanceForm() {
       isCancelled = true
       clearTimeout(timer)
     }
-  }, [date, semester, academicYear, classTeacher, totalStudents, setValue])
+  }, [date, semester, academicYear, classTeacher, totalStudents, urlDayAttendanceId, setValue])
 
   // Save a single session (row)
   const handleSaveSession = async (hourIndex: number) => {

@@ -265,7 +265,7 @@ export default function AttendancePreview() {
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <Link
-                  href="/form"
+                  href={dayAttendanceIdParam ? `/form?dayAttendanceId=${dayAttendanceIdParam}` : '/form'}
                   className="px-4 sm:px-6 py-2 sm:py-3 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-semibold rounded-lg flex items-center justify-center gap-2 text-sm sm:text-base"
                   title="Back to Edit Form"
                 >
