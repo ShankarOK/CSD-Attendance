@@ -11,13 +11,15 @@
     "db:setup-admin": "tsx lib/db/setup-admin.ts",
     "db:migrate": "tsx lib/db/migrate-remove-course-faculty.ts",
     "db:migrate-class-teacher": "tsx lib/db/migrate-remove-class-teacher.ts",
-    "db:migrate-day-attendance": "tsx lib/db/migrate-day-attendance.ts"
+    "db:migrate-day-attendance": "tsx lib/db/migrate-day-attendance.ts",
+    "db:migrate-auth": "tsx lib/db/migrate-auth.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
     "@supabase/supabase-js": "^2.91.1",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
+    "jose": "^6.1.3",
     "jsonwebtoken": "^9.0.3",
     "next": "^14.2.0",
     "react": "^18.3.0",
