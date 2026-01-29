@@ -15,18 +15,22 @@ function AdminBypassContent() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    const key = searchParams?.get('key')
+    const keyParam = searchParams?.get('key')
     
-    if (!key) {
+    // Handle missing key
+    if (!keyParam || keyParam.trim() === '') {
       setStatus('error')
       setMessage('No bypass key provided. Please provide ?key=<your-secret-key>')
       return
     }
 
+    // At this point, keyParam is guaranteed to be a non-empty string
+    const key: string = keyParam
+
     // Verify key by calling API
-    async function verifyBypass() {
+    async function verifyBypass(bypassKey: string) {
       try {
-        const response = await fetch(`/api/maintenance/bypass?key=${encodeURIComponent(key)}`, {
+        const response = await fetch(`/api/maintenance/bypass?key=${encodeURIComponent(bypassKey)}`, {
           method: 'POST',
         })
 
@@ -50,7 +54,7 @@ function AdminBypassContent() {
       }
     }
 
-    verifyBypass()
+    verifyBypass(key)
   }, [searchParams, router])
 
   return (
