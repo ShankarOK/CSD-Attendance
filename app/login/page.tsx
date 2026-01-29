@@ -17,17 +17,41 @@ function LoginContent() {
     setIsLoading(true)
 
     try {
+      // Add timeout and cache prevention
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
         },
         body: JSON.stringify({ username, password }),
+        signal: controller.signal,
+        cache: 'no-store',
       })
 
-      const data = await response.json()
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
+        const data = await response.json().catch(() => ({ error: 'Login failed' }))
+        setToast({ message: data.error || 'Login failed', type: 'error' })
+        setIsLoading(false)
+        return
+      }
+
+      let data
+      try {
+        data = await response.json()
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError)
+        setToast({ message: 'Invalid response from server', type: 'error' })
+        setIsLoading(false)
+        return
+      }
+      
+      if (!data.success) {
         setToast({ message: data.error || 'Login failed', type: 'error' })
         setIsLoading(false)
         return
@@ -41,9 +65,13 @@ function LoginContent() {
         router.push(redirectTo)
         router.refresh()
       }, 500)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error)
-      setToast({ message: 'An error occurred. Please try again.', type: 'error' })
+      if (error.name === 'AbortError') {
+        setToast({ message: 'Request timed out. Please try again.', type: 'error' })
+      } else {
+        setToast({ message: 'An error occurred. Please try again.', type: 'error' })
+      }
       setIsLoading(false)
     }
   }
