@@ -51,21 +51,31 @@ export function middleware(request: NextRequest) {
   
   if (!authToken) {
     // Not authenticated - redirect to login with return URL
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+    // But don't redirect if already on login page (prevent loops)
+    if (pathname !== '/login') {
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+    // If already on login page and no token, allow it (public path)
+    return handleMaintenanceMode(request)
   }
 
   // Verify token
   const decoded = verifyToken(authToken)
   if (!decoded) {
     // Invalid token - redirect to login
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirect', pathname)
-    const response = NextResponse.redirect(loginUrl)
-    // Clear invalid token
-    response.cookies.delete('auth_token')
-    return response
+    // But don't redirect if already on login page
+    if (pathname !== '/login') {
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('redirect', pathname)
+      const response = NextResponse.redirect(loginUrl)
+      // Clear invalid token
+      response.cookies.delete('auth_token')
+      return response
+    }
+    // If already on login page, allow it
+    return handleMaintenanceMode(request)
   }
 
   // Authenticated - check maintenance mode
