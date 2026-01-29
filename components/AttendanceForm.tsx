@@ -94,6 +94,16 @@ export default function AttendanceForm() {
   const date = watch('date')
   const academicYear = watch('academicYear')
   const classTeacher = watch('classTeacher')
+  
+  // Check if all required header fields are filled
+  const areHeadersComplete = Boolean(
+    date && 
+    semester && 
+    academicYear && 
+    classTeacher && 
+    totalStudents && 
+    totalStudents > 0
+  )
 
   // Fetch courses from database on mount
   useEffect(() => {
@@ -347,7 +357,7 @@ export default function AttendanceForm() {
           if (dayAttendance.status === 'FINALIZED') {
             setToast({ 
               message: 'This day attendance is finalized. You can view it but cannot edit.', 
-              type: 'warning' 
+              type: 'info' 
             })
           }
         }
@@ -632,7 +642,12 @@ export default function AttendanceForm() {
       }
 
       setDayAttendanceStatus('FINALIZED')
-      setToast({ message: 'Day attendance finalized successfully! Ready for print.', type: 'success' })
+      setToast({ message: 'Day attendance finalized successfully! Redirecting to preview...', type: 'success' })
+      
+      // Redirect to preview with dayAttendanceId to maintain state consistency
+      setTimeout(() => {
+        router.push(`/preview?dayAttendanceId=${dayAttendanceId}`)
+      }, 1000)
     } catch (error: any) {
       console.error('Error finalizing day attendance:', error)
       setToast({ message: error.message || 'Failed to finalize day attendance', type: 'error' })
@@ -753,7 +768,7 @@ export default function AttendanceForm() {
   const percentage = calculatePercentage(totalStudents, present)
 
   const onSubmit = async (data: AttendanceReport) => {
-    // If day attendance is finalized, redirect to print preview
+    // If day attendance is finalized, redirect to print preview with dayAttendanceId
     if (dayAttendanceStatus === 'FINALIZED' && dayAttendanceId) {
       router.push(`/preview?dayAttendanceId=${dayAttendanceId}`)
       return
@@ -945,47 +960,6 @@ export default function AttendanceForm() {
 
                 {/* Header-level course fields removed: course selection is per-session in the table below */}
                 <div>
-                  <label htmlFor="courseFaculty" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                    Course Faculty <span className="text-red-500" aria-label="required">*</span>
-                  </label>
-                  <select
-                    id="courseFaculty"
-                    {...register('courseFaculty', { required: 'Course Faculty is required' })}
-                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
-                    aria-invalid={errors.courseFaculty ? 'true' : 'false'}
-                    aria-describedby={errors.courseFaculty ? 'courseFaculty-error' : undefined}
-                    disabled={isLoadingFaculty}
-                  >
-                    <option value="">
-                      {isLoadingFaculty ? 'Loading faculty...' : 'Select Faculty'}
-                    </option>
-                    {courseFaculty.length > 0
-                      ? courseFaculty
-                          .filter((faculty) => faculty && faculty.id && faculty.name)
-                          .map((faculty) => (
-                            <option key={faculty.id} value={faculty.name}>
-                              {faculty.name}
-                            </option>
-                          ))
-                      : !isLoadingFaculty && (
-                          <option value="" disabled>
-                            No faculty available
-                          </option>
-                        )}
-                  </select>
-                  {errors.courseFaculty && (
-                    <p id="courseFaculty-error" className="text-red-500 text-xs mt-1" role="alert">
-                      {errors.courseFaculty.message}
-                    </p>
-                  )}
-                  {courseFaculty.length === 0 && !isLoadingFaculty && (
-                    <p className="text-yellow-600 text-xs mt-1">
-                      No faculty found. Please check the database or refresh the page.
-                    </p>
-                  )}
-                </div>
-
-                <div>
                   <label htmlFor="date" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Date <span className="text-red-500" aria-label="required">*</span>
                   </label>
@@ -1037,6 +1011,11 @@ export default function AttendanceForm() {
                 <h2 id="hour-table" className="text-lg sm:text-xl font-semibold text-gray-700">
                   Hour Table (8 Hours)
                 </h2>
+                {!areHeadersComplete && (
+                  <span className="text-xs sm:text-sm text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                    Please fill all header fields to enable hour table
+                  </span>
+                )}
                 <div className="flex items-center gap-2 flex-wrap">
                   {isLoadingDayAttendance && (
                     <span className="text-xs sm:text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
@@ -1081,7 +1060,7 @@ export default function AttendanceForm() {
                         const hourData = watch(`hours.${i}`)
                         const isSaved = savedSessions.has(i)
                         const isSaving = savingSession === i
-                        const isDisabled = dayAttendanceStatus === 'FINALIZED'
+                        const isDisabled = dayAttendanceStatus === 'FINALIZED' || !areHeadersComplete
                         
                         return (
                           <tr key={i} className={isSaved ? 'bg-green-50' : ''}>
