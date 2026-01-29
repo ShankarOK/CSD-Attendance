@@ -4,7 +4,6 @@ import { AttendanceReport } from '@/lib/types'
 import {
   calculateAbsent,
   calculatePercentage,
-  getAcademicYearOptions,
   validateTimeRange
 } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
@@ -36,6 +35,8 @@ export default function AttendanceForm() {
   const [isLoadingCourses, setIsLoadingCourses] = useState(true)
   const [courseFaculty, setCourseFaculty] = useState<Teacher[]>([])
   const [isLoadingFaculty, setIsLoadingFaculty] = useState(true)
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<string>('')
+  const [isLoadingAcademicYear, setIsLoadingAcademicYear] = useState(true)
   
   // Day attendance state
   const [dayAttendanceId, setDayAttendanceId] = useState<number | null>(null)
@@ -236,6 +237,31 @@ export default function AttendanceForm() {
       abortController.abort()
     }
   }, [])
+
+  // Fetch academic year from database on mount
+  useEffect(() => {
+    async function fetchAcademicYear() {
+      try {
+        setIsLoadingAcademicYear(true)
+        const response = await fetch('/api/academic-year')
+        if (!response.ok) {
+          throw new Error('Failed to fetch academic year')
+        }
+        const data = await response.json()
+        const year = data.current_academic_year || ''
+        setCurrentAcademicYear(year)
+        if (year) {
+          setValue('academicYear', year)
+        }
+      } catch (error) {
+        console.error('Error fetching academic year:', error)
+        setToast({ message: 'Failed to load academic year from database', type: 'error' })
+      } finally {
+        setIsLoadingAcademicYear(false)
+      }
+    }
+    fetchAcademicYear()
+  }, [setValue])
 
   // Filter courses by selected semester
   const coursesForSemester = semester
@@ -600,8 +626,7 @@ export default function AttendanceForm() {
     }
   }, [semester, setValue])
   
-  // Get academic year options
-  const academicYearOptions = getAcademicYearOptions()
+  // Academic year is now auto-fetched from database, no need for options
 
   // Track form changes for unsaved data warning
   useEffect(() => {
@@ -742,23 +767,26 @@ export default function AttendanceForm() {
                   <label htmlFor="academicYear" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Academic Year <span className="text-red-500" aria-label="required">*</span>
                   </label>
-                  <select
+                  <input
                     id="academicYear"
+                    type="text"
                     {...register('academicYear', { required: 'Academic Year is required' })}
-                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
+                    value={currentAcademicYear}
+                    readOnly
+                    disabled={isLoadingAcademicYear}
+                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-50 text-sm sm:text-base min-h-[44px] cursor-not-allowed"
                     aria-invalid={errors.academicYear ? 'true' : 'false'}
                     aria-describedby={errors.academicYear ? 'academicYear-error' : undefined}
-                  >
-                    <option value="">Select Academic Year</option>
-                    {academicYearOptions.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder={isLoadingAcademicYear ? 'Loading...' : 'Academic year will be auto-filled'}
+                  />
                   {errors.academicYear && (
                     <p id="academicYear-error" className="text-red-500 text-xs mt-1" role="alert">
                       {errors.academicYear.message}
+                    </p>
+                  )}
+                  {!isLoadingAcademicYear && !currentAcademicYear && (
+                    <p className="text-yellow-600 text-xs mt-1">
+                      Academic year not set in database. Please contact administrator.
                     </p>
                   )}
                 </div>
@@ -1091,6 +1119,23 @@ export default function AttendanceForm() {
                                 className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                 placeholder="0"
                                 aria-label={`Students present for hour ${i + 1}`}
+                                onKeyDown={(e) => {
+                                  // Prevent negative values with arrow keys
+                                  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                                    const currentValue = parseFloat((e.target as HTMLInputElement).value) || 0
+                                    if (e.key === 'ArrowDown' && currentValue <= 0) {
+                                      e.preventDefault()
+                                    }
+                                  }
+                                }}
+                                onChange={(e) => {
+                                  const value = parseFloat(e.target.value) || 0
+                                  const clampedValue = Math.max(0, Math.min(value, totalStudents || 999))
+                                  if (value !== clampedValue) {
+                                    e.target.value = clampedValue.toString()
+                                    setValue(`hours.${i}.present`, clampedValue)
+                                  }
+                                }}
                               />
                             </td>
                             <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
@@ -1190,6 +1235,23 @@ export default function AttendanceForm() {
                     placeholder="0"
                     aria-invalid={errors.present ? 'true' : 'false'}
                     aria-describedby={errors.present ? 'present-error' : undefined}
+                    onKeyDown={(e) => {
+                      // Prevent negative values with arrow keys
+                      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                        const currentValue = parseFloat((e.target as HTMLInputElement).value) || 0
+                        if (e.key === 'ArrowDown' && currentValue <= 0) {
+                          e.preventDefault()
+                        }
+                      }
+                    }}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || 0
+                      const clampedValue = Math.max(0, Math.min(value, totalStudents || 999))
+                      if (value !== clampedValue) {
+                        e.target.value = clampedValue.toString()
+                        setValue('present', clampedValue)
+                      }
+                    }}
                   />
                   {errors.present && (
                     <p id="present-error" className="text-red-500 text-xs mt-1" role="alert">

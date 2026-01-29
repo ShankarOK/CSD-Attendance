@@ -2,11 +2,9 @@
 
 import { AttendanceReport } from '@/lib/types'
 import {
-    calculateAbsent,
-    calculatePercentage,
     formatDateAcademic,
     formatTimeAcademic,
-    getDayName,
+    getDayName
 } from '@/lib/utils'
 
 import Link from 'next/link'
@@ -470,8 +468,34 @@ export default function AttendancePreview() {
             </table>
           </div>
 
-          {/* Footer - HOD Remarks Editable */}
+          {/* Footer - Day Average Attendance & HOD Remarks */}
           <div className="print-footer">
+            {/* Day Average Attendance - Auto-calculated, Read-only */}
+            <div className="print-summary mb-4">
+              <div className="print-summary-grid">
+                <div className="print-summary-item">
+                  <span className="print-label">Day Average Attendance:</span>
+                  <input
+                    type="text"
+                    value={(() => {
+                      if (loadedSessions.length === 0 || totalStudents === 0) return 'N/A'
+                      const totalPresent = loadedSessions.reduce((sum: number, session: any) => {
+                        const hourData = hours?.[session.hour_no - 1]
+                        return sum + (hourData?.present || 0)
+                      }, 0)
+                      const averagePresent = (totalPresent / loadedSessions.length).toFixed(2)
+                      const averagePercentage = totalStudents > 0 
+                        ? ((parseFloat(averagePresent) / totalStudents) * 100).toFixed(2)
+                        : '0.00'
+                      return `${averagePresent} / ${totalStudents} (${averagePercentage}%)`
+                    })()}
+                    readOnly
+                    className="print-field-input print-field-readonly"
+                  />
+                </div>
+              </div>
+            </div>
+            
             <div className="print-remarks">
               <p className="print-label">Remarks by the HOD:</p>
               <textarea
