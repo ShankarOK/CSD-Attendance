@@ -2,12 +2,12 @@
 
 import { AttendanceReport } from '@/lib/types'
 import {
-  calculateAbsent,
-  calculatePercentage,
-  formatDateAcademic,
-  formatTimeAcademic,
-  getDayName,
-  validateTimeRange
+    calculateAbsent,
+    calculatePercentage,
+    formatDateAcademic,
+    formatTimeAcademic,
+    getDayName,
+    validateTimeRange
 } from '@/lib/utils'
 
 interface Course {
@@ -22,6 +22,7 @@ interface Teacher {
 }
 
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useReactToPrint } from 'react-to-print'
@@ -32,6 +33,10 @@ import Toast from './Toast'
  * Users can fill the form directly on the printable document
  */
 export default function AttendancePreview() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const dayAttendanceIdParam = searchParams?.get('dayAttendanceId')
+  
   const componentRef = useRef<HTMLFormElement>(null)
   const [isPrinting, setIsPrinting] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
@@ -47,6 +52,7 @@ export default function AttendancePreview() {
   const [savedRows, setSavedRows] = useState<Set<number>>(new Set()) // Track saved row indices
   const [savedRowsData, setSavedRowsData] = useState<Record<number, any>>({}) // Store saved row data
   const [editingRows, setEditingRows] = useState<Set<number>>(new Set()) // Track rows being edited
+  const [isLoadingFinalizedData, setIsLoadingFinalizedData] = useState(false)
 
   // Load existing data from sessionStorage if available
   const loadStoredData = (): Partial<AttendanceReport> => {
@@ -113,6 +119,82 @@ export default function AttendancePreview() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Load finalized attendance data if dayAttendanceId is provided
+  useEffect(() => {
+    async function loadFinalizedData() {
+      if (!dayAttendanceIdParam) {
+        // No dayAttendanceId - redirect to form
+        router.push('/form')
+        return
+      }
+
+      try {
+        setIsLoadingFinalizedData(true)
+        const response = await fetch(`/api/attendance/day/${dayAttendanceIdParam}/print`)
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          if (response.status === 403) {
+            // Day not finalized - redirect to form
+            router.push('/form')
+            return
+          }
+          throw new Error(errorData.error || 'Failed to load finalized attendance data')
+        }
+
+        const data = await response.json()
+        const { dayAttendance, sessions } = data
+
+        // Populate form with finalized data
+        setValue('date', dayAttendance.date)
+        setValue('semester', dayAttendance.semester.toString())
+        setValue('academicYear', dayAttendance.academic_year)
+        setValue('classTeacher', dayAttendance.classTeacherName)
+        setValue('totalStudents', dayAttendance.total_students)
+        setValue('program', dayAttendance.program)
+        setValue('department', dayAttendance.department)
+
+        // Populate hours with session data
+        // Note: For preview/print, we use faculty name (string) since it's read-only
+        const hoursData = Array.from({ length: 8 }, (_, i) => {
+          const session = sessions.find((s: any) => s.hour_no === i + 1)
+          return {
+            hour: i + 1,
+            room: session?.room_no || '',
+            start: session?.start_time?.substring(0, 5) || '', // Convert HH:MM:SS to HH:MM
+            end: session?.end_time?.substring(0, 5) || '',
+            courseCode: session?.course_code || '',
+            courseFaculty: session?.facultyName || '', // Use name for display
+            present: session?.students_present || 0,
+          }
+        })
+
+        setValue('hours', hoursData)
+        setRowCount(sessions.length)
+        setSavedRows(new Set(sessions.map((s: any) => s.hour_no - 1)))
+        
+        setToast({ 
+          message: `Finalized attendance data loaded (${sessions.length} session${sessions.length !== 1 ? 's' : ''})`, 
+          type: 'success' 
+        })
+      } catch (error: any) {
+        console.error('Error loading finalized data:', error)
+        setToast({ 
+          message: error.message || 'Failed to load finalized attendance data', 
+          type: 'error' 
+        })
+        // Redirect to form on error
+        setTimeout(() => {
+          router.push('/form')
+        }, 2000)
+      } finally {
+        setIsLoadingFinalizedData(false)
+      }
+    }
+
+    loadFinalizedData()
+  }, [dayAttendanceIdParam, setValue, router])
 
   // Fetch academic year from database on mount
   useEffect(() => {
@@ -455,6 +537,15 @@ export default function AttendancePreview() {
         />
       )}
 
+      {isLoadingFinalizedData && (
+        <div className="max-w-6xl mx-auto mb-4 p-4 bg-white rounded-lg shadow-md">
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-sm font-medium text-gray-700">Loading finalized attendance data...</span>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto">
         {/* Header Section - No Print */}
         <div className="mb-4 sm:mb-8 no-print">
@@ -470,21 +561,20 @@ export default function AttendancePreview() {
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <Link
-                  href="/"
-                  className="px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base rounded-lg hover:bg-gray-50"
-                  title="Back to Home"
+                  href="/form"
+                  className="px-4 sm:px-6 py-2 sm:py-3 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-semibold rounded-lg flex items-center justify-center gap-2 text-sm sm:text-base"
+                  title="Back to Edit Form"
                 >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                   </svg>
-                  <span className="hidden sm:inline">Home</span>
-                  <span className="sm:hidden">Back</span>
+                  <span>Back to Edit</span>
                 </Link>
                 <button
                   onClick={handlePrintClick}
                   disabled={isPrinting || !canPrint}
                   className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2 text-sm sm:text-base"
-                  aria-label={isPrinting ? 'Printing...' : canPrint ? 'Print report' : 'Save at least one row to print'}
+                  aria-label={isPrinting ? 'Printing...' : canPrint ? 'Continue to print' : 'Save at least one row to print'}
                 >
                   {isPrinting ? (
                     <>
@@ -492,16 +582,14 @@ export default function AttendancePreview() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      <span className="hidden sm:inline">Printing...</span>
-                      <span className="sm:hidden">Printing</span>
+                      <span>Printing...</span>
                     </>
                   ) : (
                     <>
                       <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>
-                      <span className="hidden sm:inline">Print Report</span>
-                      <span className="sm:hidden">Print</span>
+                      <span>Continue</span>
                     </>
                   )}
                 </button>

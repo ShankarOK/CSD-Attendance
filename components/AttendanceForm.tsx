@@ -36,6 +36,14 @@ export default function AttendanceForm() {
   const [isLoadingCourses, setIsLoadingCourses] = useState(true)
   const [courseFaculty, setCourseFaculty] = useState<Teacher[]>([])
   const [isLoadingFaculty, setIsLoadingFaculty] = useState(true)
+  
+  // Day attendance state
+  const [dayAttendanceId, setDayAttendanceId] = useState<number | null>(null)
+  const [dayAttendanceStatus, setDayAttendanceStatus] = useState<'DRAFT' | 'FINALIZED' | null>(null)
+  const [isLoadingDayAttendance, setIsLoadingDayAttendance] = useState(false)
+  const [savedSessions, setSavedSessions] = useState<Set<number>>(new Set()) // Track which hours are saved
+  const [savingSession, setSavingSession] = useState<number | null>(null) // Track which hour is being saved
+  const [isFinalizing, setIsFinalizing] = useState(false)
 
   const { 
     register, 
@@ -50,6 +58,9 @@ export default function AttendanceForm() {
         room: '',
         start: '',
         end: '',
+        courseCode: '',
+        courseFaculty: '',
+        present: 0,
       })),
       totalStudents: 0,
       present: 0,
@@ -77,6 +88,9 @@ export default function AttendanceForm() {
   const semester = watch('semester')
   const courseCode = watch('courseCode')
   const courseTitle = watch('courseTitle')
+  const date = watch('date')
+  const academicYear = watch('academicYear')
+  const classTeacher = watch('classTeacher')
 
   // Fetch courses from database on mount
   useEffect(() => {
@@ -264,6 +278,240 @@ export default function AttendanceForm() {
       setValue('courseTitle', courseByCode.title, { shouldValidate: true, shouldDirty: true })
     }
   }, [courseCode, courseTitle, coursesForSemester, semester, isLoadingCourses, setValue])
+
+  // Auto-load day attendance when date + semester + academic year selected
+  // This triggers after classTeacher and totalStudents are populated from semester selection
+  useEffect(() => {
+    let isCancelled = false
+    
+    async function loadDayAttendance() {
+      // Wait for classTeacher and totalStudents to be populated from semester selection
+      if (!date || !semester || !academicYear) {
+        // Reset state if required fields are missing
+        if (!isCancelled) {
+          setDayAttendanceId(null)
+          setDayAttendanceStatus(null)
+          setSavedSessions(new Set())
+        }
+        return
+      }
+
+      // Wait a bit for semester data to load (classTeacher and totalStudents)
+      if (!classTeacher || !totalStudents || totalStudents === 0) {
+        // Don't reset, just wait
+        return
+      }
+
+      try {
+        setIsLoadingDayAttendance(true)
+        const response = await fetch('/api/attendance/day/get-or-create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            date,
+            semester: parseInt(semester, 10),
+            department: 'Computer Science and Design',
+            program: 'Bachelor in Engineering',
+            academicYear,
+            classTeacherName: classTeacher,
+            totalStudents: parseInt(totalStudents.toString(), 10),
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || 'Failed to load day attendance')
+        }
+
+        const data = await response.json()
+        
+        if (!isCancelled) {
+          setDayAttendanceId(data.dayAttendance.id)
+          setDayAttendanceStatus(data.dayAttendance.status)
+          
+          // Load saved sessions into form
+          const savedHours = new Set<number>()
+          data.sessions.forEach((session: any) => {
+            const hourIndex = session.hour_no - 1
+            savedHours.add(hourIndex)
+            
+            // Populate form fields
+            setValue(`hours.${hourIndex}.room`, session.room_no || '')
+            setValue(`hours.${hourIndex}.start`, session.start_time.substring(0, 5)) // Convert HH:MM:SS to HH:MM
+            setValue(`hours.${hourIndex}.end`, session.end_time.substring(0, 5))
+            setValue(`hours.${hourIndex}.courseCode`, session.course_code || '')
+            // Set faculty ID (the dropdown uses faculty.id as value)
+            setValue(`hours.${hourIndex}.courseFaculty`, session.faculty_id?.toString() || '')
+            setValue(`hours.${hourIndex}.present`, session.students_present || 0)
+          })
+          
+          setSavedSessions(savedHours)
+          
+          if (data.sessions.length > 0) {
+            setToast({ 
+              message: `Loaded ${data.sessions.length} saved session(s)`, 
+              type: 'success' 
+            })
+          } else if (data.dayAttendance.status === 'DRAFT') {
+            setToast({ 
+              message: 'Day attendance created. Start filling session details.', 
+              type: 'info' 
+            })
+          }
+        }
+      } catch (error: any) {
+        console.error('Error loading day attendance:', error)
+        if (!isCancelled) {
+          setToast({ 
+            message: error.message || 'Failed to load day attendance. Please try again.', 
+            type: 'error' 
+          })
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingDayAttendance(false)
+        }
+      }
+    }
+
+    // Small delay to ensure semester data is loaded
+    const timer = setTimeout(() => {
+      loadDayAttendance()
+    }, 300)
+
+    return () => {
+      isCancelled = true
+      clearTimeout(timer)
+    }
+  }, [date, semester, academicYear, classTeacher, totalStudents, setValue])
+
+  // Save a single session (row)
+  const handleSaveSession = async (hourIndex: number) => {
+    if (!dayAttendanceId) {
+      setToast({ message: 'Please select date and semester first to create day attendance', type: 'error' })
+      return
+    }
+    
+    if (dayAttendanceStatus === 'FINALIZED') {
+      setToast({ message: 'Cannot save: Day attendance is finalized', type: 'error' })
+      return
+    }
+
+    const hourData = watch(`hours.${hourIndex}`)
+    const hourNo = hourIndex + 1
+
+    // Validate required fields
+    if (!hourData.room || !hourData.start || !hourData.end || !hourData.courseCode || !hourData.courseFaculty) {
+      setToast({ message: `Please fill all fields for hour ${hourNo} before saving`, type: 'error' })
+      return
+    }
+
+    // Validate time range
+    if (!validateTimeRange(hourData.start, hourData.end)) {
+      setToast({ message: `End time must be after start time for hour ${hourNo}`, type: 'error' })
+      return
+    }
+
+    // Validate present count
+    const presentValue = hourData.present || 0
+    if (presentValue < 0 || presentValue > totalStudents) {
+      setToast({ message: `Students present for hour ${hourNo} must be between 0 and ${totalStudents}`, type: 'error' })
+      return
+    }
+
+    try {
+      setSavingSession(hourIndex)
+      
+      // Find faculty name from ID (courseFaculty stores ID as value)
+      const facultyId = parseInt(hourData.courseFaculty, 10)
+      if (isNaN(facultyId)) {
+        setToast({ message: 'Please select a valid faculty', type: 'error' })
+        return
+      }
+      
+      const faculty = courseFaculty.find(f => f.id === facultyId)
+      if (!faculty) {
+        setToast({ message: 'Invalid faculty selected. Please refresh the page.', type: 'error' })
+        return
+      }
+
+      const response = await fetch('/api/attendance/session/upsert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dayAttendanceId,
+          hourNo,
+          roomNo: hourData.room,
+          startTime: hourData.start,
+          endTime: hourData.end,
+          courseCode: hourData.courseCode,
+          facultyName: faculty.name,
+          studentsPresent: presentValue,
+          studentsAbsent: Math.max(0, totalStudents - presentValue),
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to save session')
+      }
+
+      const result = await response.json()
+      setSavedSessions(prev => new Set(prev).add(hourIndex))
+      setToast({ message: `Hour ${hourNo} saved successfully ✓`, type: 'success' })
+    } catch (error: any) {
+      console.error('Error saving session:', error)
+      setToast({ message: error.message || 'Failed to save session', type: 'error' })
+    } finally {
+      setSavingSession(null)
+    }
+  }
+
+  // Finalize day attendance
+  const handleFinalizeDay = async () => {
+    if (!dayAttendanceId) {
+      setToast({ message: 'No day attendance loaded', type: 'error' })
+      return
+    }
+
+    if (dayAttendanceStatus === 'FINALIZED') {
+      setToast({ message: 'Day attendance is already finalized', type: 'info' })
+      return
+    }
+
+    if (savedSessions.size === 0) {
+      setToast({ message: 'Please save at least one session before finalizing', type: 'error' })
+      return
+    }
+
+    try {
+      setIsFinalizing(true)
+      const response = await fetch('/api/attendance/day/finalize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ dayAttendanceId }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to finalize day attendance')
+      }
+
+      setDayAttendanceStatus('FINALIZED')
+      setToast({ message: 'Day attendance finalized successfully! Ready for print.', type: 'success' })
+    } catch (error: any) {
+      console.error('Error finalizing day attendance:', error)
+      setToast({ message: error.message || 'Failed to finalize day attendance', type: 'error' })
+    } finally {
+      setIsFinalizing(false)
+    }
+  }
   
   // Fetch semester data and auto-populate class teacher and total students when semester changes
   useEffect(() => {
@@ -378,37 +626,38 @@ export default function AttendanceForm() {
   const percentage = calculatePercentage(totalStudents, present)
 
   const onSubmit = async (data: AttendanceReport) => {
-    setIsSubmitting(true)
-    
-    try {
-      // Validate calculations and ensure fixed values
-      const validatedData: AttendanceReport = {
-        ...data,
-        program: 'Bachelor in Engineering',
-        department: 'Computer Science and Design',
-        absent: calculateAbsent(data.totalStudents, data.present),
-        percentage: calculatePercentage(data.totalStudents, data.present),
-      }
-
-      // Store in sessionStorage for preview page
-      sessionStorage.setItem('attendanceReport', JSON.stringify(validatedData))
-      
-      setToast({ message: 'Report created successfully! Redirecting...', type: 'success' })
-      
-      // Small delay to show success message
-      setTimeout(() => {
-        router.push('/preview')
-      }, 500)
-    } catch (error) {
-      console.error('Error submitting form:', error)
-      setToast({ message: 'Failed to create report. Please try again.', type: 'error' })
-      setIsSubmitting(false)
+    // If day attendance is finalized, redirect to print preview
+    if (dayAttendanceStatus === 'FINALIZED' && dayAttendanceId) {
+      router.push(`/preview?dayAttendanceId=${dayAttendanceId}`)
+      return
     }
+
+    // Otherwise, show message to finalize first
+    if (!dayAttendanceId) {
+      setToast({ 
+        message: 'Please select date, semester, and academic year first', 
+        type: 'error' 
+      })
+      return
+    }
+
+    if (savedSessions.size === 0) {
+      setToast({ 
+        message: 'Please save at least one session before finalizing', 
+        type: 'error' 
+      })
+      return
+    }
+
+    setToast({ 
+      message: 'Please click "Finalize Day" button first, then preview & print', 
+      type: 'info' 
+    })
   }
 
   const handleCancel = () => {
-    if (hasUnsavedChanges) {
-      const confirmed = window.confirm('You have unsaved changes. Are you sure you want to leave?')
+    if (hasUnsavedChanges && savedSessions.size > 0) {
+      const confirmed = window.confirm('You have unsaved sessions. Are you sure you want to leave?')
       if (!confirmed) return
     }
     router.push('/')
@@ -432,6 +681,27 @@ export default function AttendanceForm() {
           <p className="text-center text-gray-600 mb-4 sm:mb-6 text-xs sm:text-sm">
             Fill in all required fields marked with <span className="text-red-500">*</span>
           </p>
+          
+          {/* Workflow Info Banner */}
+          {dayAttendanceId && (
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-blue-900 mb-1">How it works:</h3>
+                  <ol className="text-xs sm:text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                    <li>Select date and semester to auto-load or create day attendance</li>
+                    <li>Fill each hour row with course code, faculty, times, and attendance</li>
+                    <li>Click "Save" on each row to save individual sessions</li>
+                    <li>Click "Finalize Day" when all sessions are complete</li>
+                    <li>Preview and print the finalized attendance report</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6" noValidate>
             {/* Section 1: Header Details */}
@@ -689,30 +959,64 @@ export default function AttendanceForm() {
 
             {/* Section 2: Hour Table */}
             <section className="border-b pb-4 sm:pb-6" aria-labelledby="hour-table">
-              <h2 id="hour-table" className="text-lg sm:text-xl font-semibold text-gray-700 mb-3 sm:mb-4">
-                Hour Table (8 Hours)
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
+                <h2 id="hour-table" className="text-lg sm:text-xl font-semibold text-gray-700">
+                  Hour Table (8 Hours)
+                </h2>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {isLoadingDayAttendance && (
+                    <span className="text-xs sm:text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
+                      <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      Loading saved sessions...
+                    </span>
+                  )}
+                  {dayAttendanceId && dayAttendanceStatus === 'DRAFT' && (
+                    <span className="text-xs sm:text-sm font-semibold text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
+                      Draft Mode - {savedSessions.size} session(s) saved
+                    </span>
+                  )}
+                  {dayAttendanceStatus === 'FINALIZED' && (
+                    <span className="text-xs sm:text-sm font-semibold text-green-600 bg-green-50 px-2 py-1 rounded flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Finalized - Ready for Print
+                    </span>
+                  )}
+                </div>
+              </div>
               <div className="overflow-x-auto -mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 px-3 sm:px-4 md:px-6 lg:px-8">
                 <div className="inline-block min-w-full align-middle">
-                  <table className="min-w-[600px] sm:min-w-full border-collapse border border-gray-300" role="table" aria-label="Hour table">
+                  <table className="min-w-[800px] sm:min-w-full border-collapse border border-gray-300" role="table" aria-label="Hour table">
                     <thead>
                       <tr className="bg-gray-100">
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[60px]">Hour No.</th>
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Room No.</th>
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[120px]">Start Time</th>
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[120px]">End Time</th>
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[60px]">Hour</th>
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Room</th>
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Start</th>
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">End</th>
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[120px]">Course Code</th>
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[150px]">Faculty</th>
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Present</th>
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Absent</th>
+                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       {Array.from({ length: 8 }, (_, i) => {
                         const hourStart = watch(`hours.${i}.start`)
+                        const hourData = watch(`hours.${i}`)
+                        const isSaved = savedSessions.has(i)
+                        const isSaving = savingSession === i
+                        const isDisabled = dayAttendanceStatus === 'FINALIZED'
+                        
                         return (
-                          <tr key={i}>
+                          <tr key={i} className={isSaved ? 'bg-green-50' : ''}>
                             <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-xs sm:text-sm text-center font-medium">{i + 1}</td>
                             <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
                               <input
                                 {...register(`hours.${i}.room`)}
-                                className="w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px]"
+                                disabled={isDisabled}
+                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                 placeholder="Room"
                                 aria-label={`Room number for hour ${i + 1}`}
                               />
@@ -721,7 +1025,8 @@ export default function AttendanceForm() {
                               <input
                                 type="time"
                                 {...register(`hours.${i}.start`)}
-                                className="w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px]"
+                                disabled={isDisabled}
+                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                 aria-label={`Start time for hour ${i + 1}`}
                               />
                             </td>
@@ -734,22 +1039,115 @@ export default function AttendanceForm() {
                                     return validateTimeRange(hourStart, value) || 'End time must be after start time'
                                   }
                                 })}
-                                className="w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px]"
+                                disabled={isDisabled}
+                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                 aria-label={`End time for hour ${i + 1}`}
                               />
-                            {errors.hours?.[i]?.end && (
-                              <p className="text-red-500 text-xs mt-0.5 block" role="alert">
-                                {errors.hours[i]?.end?.message}
-                              </p>
-                            )}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                              {errors.hours?.[i]?.end && (
+                                <p className="text-red-500 text-xs mt-0.5 block" role="alert">
+                                  {errors.hours[i]?.end?.message}
+                                </p>
+                              )}
+                            </td>
+                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                              <select
+                                {...register(`hours.${i}.courseCode`)}
+                                disabled={isDisabled || isLoadingCourses || !semester}
+                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                aria-label={`Course code for hour ${i + 1}`}
+                              >
+                                <option value="">Select</option>
+                                {coursesForSemester.map((course) => (
+                                  <option key={course.code} value={course.code}>
+                                    {course.code}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                              <select
+                                {...register(`hours.${i}.courseFaculty`)}
+                                disabled={isDisabled || isLoadingFaculty}
+                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                aria-label={`Faculty for hour ${i + 1}`}
+                              >
+                                <option value="">Select</option>
+                                {courseFaculty.map((faculty) => (
+                                  <option key={faculty.id} value={faculty.id}>
+                                    {faculty.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                              <input
+                                type="number"
+                                {...register(`hours.${i}.present`, {
+                                  min: 0,
+                                  max: totalStudents || 999,
+                                  valueAsNumber: true,
+                                })}
+                                disabled={isDisabled}
+                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                placeholder="0"
+                                aria-label={`Students present for hour ${i + 1}`}
+                              />
+                            </td>
+                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                              <div className="text-xs text-gray-500 text-center">
+                                {totalStudents > 0 && hourData.present !== undefined
+                                  ? Math.max(0, totalStudents - (hourData.present || 0))
+                                  : '-'}
+                              </div>
+                            </td>
+                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                              {isSaved ? (
+                                <span className="text-xs text-green-600 font-semibold flex items-center justify-center gap-1">
+                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                  Saved
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveSession(i)}
+                                  disabled={isDisabled || isSaving || !dayAttendanceId}
+                                  className="w-full px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
+                                  aria-label={`Save hour ${i + 1}`}
+                                >
+                                  {isSaving ? (
+                                    <>
+                                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                      Saving...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                      Save
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
+              
+              {/* Add Row button - Note: Currently showing all 8 hours by default */}
+              {dayAttendanceStatus === 'DRAFT' && dayAttendanceId && (
+                <div className="mt-4 flex justify-end">
+                  <div className="text-xs text-gray-500">
+                    All 8 hours are available. Fill and save each session individually.
+                  </div>
+                </div>
+              )}
             </section>
 
             {/* Section 3: Attendance Counts */}
@@ -852,23 +1250,62 @@ export default function AttendanceForm() {
               </div>
             </section>
 
-            {/* Submit Button */}
-            <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4 sm:pt-6">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-2.5 border-2 border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm sm:text-base font-medium min-h-[44px]"
-                aria-label="Cancel and return to home"
-              >
-                Cancel
-              </button>
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 pt-4 sm:pt-6">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-2.5 border-2 border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm sm:text-base font-medium min-h-[44px]"
+                  aria-label="Cancel and return to home"
+                >
+                  Cancel
+                </button>
+                {dayAttendanceId && dayAttendanceStatus === 'DRAFT' && (
+                  <button
+                    type="button"
+                    onClick={handleFinalizeDay}
+                    disabled={isFinalizing || savedSessions.size === 0}
+                    className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-2.5 bg-green-600 text-white rounded-md hover:bg-green-700 active:bg-green-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm sm:text-base min-h-[44px] flex items-center justify-center gap-2"
+                    aria-label={isFinalizing ? 'Finalizing...' : 'Finalize Day Attendance'}
+                  >
+                    {isFinalizing ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Finalizing...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Finalize Day ({savedSessions.size} session{savedSessions.size !== 1 ? 's' : ''} saved)
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 active:bg-blue-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm sm:text-base min-h-[44px]"
-                aria-label={isSubmitting ? 'Submitting form...' : 'Submit and preview report'}
+                disabled={isSubmitting || dayAttendanceStatus !== 'FINALIZED'}
+                className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 active:bg-blue-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm sm:text-base min-h-[44px] flex items-center justify-center gap-2"
+                aria-label={isSubmitting ? 'Submitting form...' : dayAttendanceStatus === 'FINALIZED' ? 'Preview and Print Report' : 'Finalize day attendance first'}
               >
-                {isSubmitting ? 'Submitting...' : 'Preview Report'}
+                {dayAttendanceStatus === 'FINALIZED' ? (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    Preview & Print
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Finalize to Print
+                  </>
+                )}
               </button>
             </div>
           </form>

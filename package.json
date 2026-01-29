@@ -10,7 +10,8 @@
     "db:seed": "tsx lib/db/seed.ts",
     "db:setup-admin": "tsx lib/db/setup-admin.ts",
     "db:migrate": "tsx lib/db/migrate-remove-course-faculty.ts",
-    "db:migrate-class-teacher": "tsx lib/db/migrate-remove-class-teacher.ts"
+    "db:migrate-class-teacher": "tsx lib/db/migrate-remove-class-teacher.ts",
+    "db:migrate-day-attendance": "tsx lib/db/migrate-day-attendance.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

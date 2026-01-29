@@ -1,5 +1,6 @@
 import AttendancePreview from '@/components/AttendancePreview'
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 
 export const metadata: Metadata = {
   title: 'Attendance Form',
@@ -15,5 +16,9 @@ export const metadata: Metadata = {
  * Now serves as the main editable document interface
  */
 export default function PreviewPage() {
-  return <AttendancePreview />
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <AttendancePreview />
+    </Suspense>
+  )
 }

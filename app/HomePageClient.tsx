@@ -78,7 +78,7 @@ export default function HomePageClient() {
             </div>
             <div className="flex items-center gap-3">
               <Link
-                href="/preview"
+                href="/form"
                 className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,7 +133,7 @@ export default function HomePageClient() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/preview"
+                href="/form"
                 className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,7 +183,7 @@ export default function HomePageClient() {
             <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
               {/* Attendance Form Card */}
               <Link
-                href="/preview"
+                href="/form"
                 className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden"
                 style={{ 
                   opacity: mounted ? 1 : 0,
