@@ -9,7 +9,7 @@ const variants = {
   exit: { opacity: 0, y: -4 },
 }
 
-const transition = { duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }
+const transition = { duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] as const }
 
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

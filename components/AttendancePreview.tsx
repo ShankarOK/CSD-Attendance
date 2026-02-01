@@ -193,7 +193,7 @@ export default function AttendancePreview() {
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
     documentTitle: `Attendance_Report_${date || 'report'}`,
-    onBeforeGetContent: () => {
+    onBeforePrint: async () => {
       setIsPrinting(true)
       if (componentRef.current) {
         componentRef.current.classList.remove('print-portrait', 'print-landscape')
@@ -208,7 +208,6 @@ export default function AttendancePreview() {
         }
         styleElement.textContent = `@media print { @page { size: A4 landscape; margin: 0.6cm 0.8cm; } }`
       }
-      return Promise.resolve()
     },
     onAfterPrint: () => {
       setIsPrinting(false)
@@ -218,7 +217,7 @@ export default function AttendancePreview() {
         styleElement.remove()
       }
     },
-    onPrintError: (error) => {
+    onPrintError: (_errorLocation, error) => {
       setIsPrinting(false)
       console.error('Print error:', error)
       setToast({ message: 'Failed to print. Please try again.', type: 'error' })
