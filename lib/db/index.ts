@@ -483,3 +483,58 @@ export async function getSessionsByDayAttendanceId(dayAttendanceId: number): Pro
   }
 }
 
+/**
+ * List day attendance records (archives) with optional filters.
+ * Joins teachers for class_teacher name.
+ */
+export interface ArchiveRecord {
+  id: number;
+  date: string;
+  semester: number;
+  academic_year: string;
+  class_teacher_name: string;
+  total_students: number;
+  status: 'DRAFT' | 'FINALIZED';
+}
+
+export async function listDayAttendance(filters?: {
+  dateFrom?: string;
+  dateTo?: string;
+  semester?: number;
+}): Promise<ArchiveRecord[]> {
+  try {
+    const { dateFrom, dateTo, semester } = filters || {};
+    const result = await sql`
+      SELECT d.id, d.date, d.semester, d.academic_year, d.total_students, d.status,
+             t.name AS class_teacher_name
+      FROM day_attendance d
+      LEFT JOIN teachers t ON t.id = d.class_teacher_id
+      ORDER BY d.date DESC, d.semester ASC
+      LIMIT 500
+    `;
+    type Row = { id: number; date: Date; semester: number; academic_year: string; total_students: number; status: string; class_teacher_name: string | null };
+    let rows = result as Row[];
+    if (dateFrom) {
+      const from = dateFrom.split('T')[0];
+      rows = rows.filter((r) => (r.date instanceof Date ? r.date.toISOString().split('T')[0] : String(r.date).split('T')[0]) >= from);
+    }
+    if (dateTo) {
+      const to = dateTo.split('T')[0];
+      rows = rows.filter((r) => (r.date instanceof Date ? r.date.toISOString().split('T')[0] : String(r.date).split('T')[0]) <= to);
+    }
+    if (semester != null) rows = rows.filter((r) => r.semester === semester);
+    return rows.map((r) => ({
+      id: r.id,
+      date: r.date instanceof Date ? r.date.toISOString().split('T')[0] : String(r.date).split('T')[0],
+      semester: r.semester,
+      academic_year: r.academic_year,
+      class_teacher_name: r.class_teacher_name || '—',
+      total_students: r.total_students,
+      status: r.status as 'DRAFT' | 'FINALIZED',
+    }));
+  } catch (error) {
+    console.error('Error listing day attendance:', error);
+    throw error;
+  }
+}
+

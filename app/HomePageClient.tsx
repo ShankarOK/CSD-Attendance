@@ -3,11 +3,19 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import {
+  ClipboardList,
+  LayoutDashboard,
+  Zap,
+  BarChart3,
+  Shield,
+  BookOpen,
+  FileCheck,
+  FileOutput,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
-/**
- * Fresh Professional Landing Page
- * Modern, attractive design with smooth interactions
- */
 export default function HomePageClient() {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
@@ -18,316 +26,194 @@ export default function HomePageClient() {
 
   const handleAdminClick = (e: React.MouseEvent) => {
     e.preventDefault()
-    if (mounted) {
-      router.push('/admin')
-    }
+    if (mounted) router.push('/admin')
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Top Navigation Bar */}
-      <nav className="border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <span className="text-lg font-bold text-gray-900">Attendify</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link
-                href="/form"
-                className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span>Attendance Form</span>
-              </Link>
-              <button
-                onClick={handleAdminClick}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-sm hover:shadow-md"
-                disabled={!mounted}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Admin Dashboard</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-16 sm:py-20 lg:py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div 
-            className="text-center max-w-4xl mx-auto"
-            style={{ 
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? 'translateY(0)' : 'translateY(1rem)',
-              transition: 'opacity 0.6s ease, transform 0.6s ease'
-            }}
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Hero — fluid container, wide layout; text blocks have own max-width for readability */}
+      <section className="relative z-10 container py-12 sm:py-16 md:py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-8 lg:gap-10 xl:gap-12 items-center">
+          <motion.div
+            className="min-w-0"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
           >
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-3 sm:mb-4 leading-tight">
-              PES Institute of Technology and Management
+            <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 rounded-full mb-4">
+              PESITM • CSD Department
+            </span>
+            <h1 className="max-w-3xl text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-foreground leading-tight mb-4">
+              Attendance, streamlined for{' '}
+              <span className="text-primary">modern classrooms.</span>
             </h1>
-            <div className="w-16 h-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 mx-auto mb-3 sm:mb-4"></div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-indigo-700 mb-8 sm:mb-10">
-              Department of Computer Science and Design
-            </h2>
-            
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/form"
-                className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span>Attendance Form</span>
+            <p className="max-w-2xl text-base sm:text-lg text-muted-foreground mb-6 leading-relaxed">
+              Mark attendance in seconds, manage courses effortlessly, and export clean reports with zero chaos.
+            </p>
+            <div className="flex flex-wrap gap-3 mb-4">
+              <Link href="/form">
+                <Button size="lg" className="gap-2 shadow-glow-sm hover:shadow-glow">
+                  <ClipboardList className="h-5 w-5" />
+                  Mark Attendance
+                </Button>
               </Link>
-              <button
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2"
                 onClick={handleAdminClick}
-                className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 disabled={!mounted}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Admin Dashboard</span>
-              </button>
+                <LayoutDashboard className="h-5 w-5" />
+                Open Admin Dashboard
+              </Button>
             </div>
-          </div>
+            <p className="text-sm text-muted-foreground">Fast • Secure • Export-ready</p>
+          </motion.div>
+
+          <motion.div
+            className="flex justify-center lg:justify-end"
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.15, ease: 'easeOut' }}
+          >
+            <div className="w-full max-w-md lg:max-w-lg rounded-xl border border-border bg-card p-6 sm:p-8 shadow-card hover:shadow-card-hover transition-shadow">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+                Today&apos;s overview
+              </p>
+              <div className="space-y-3 border-b border-border pb-3">
+                <div className="flex justify-between text-sm sm:text-base">
+                  <span className="text-muted-foreground">Today&apos;s Attendance</span>
+                  <span className="font-semibold text-foreground">52/60</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                  <div className="h-full w-[86%] rounded-full bg-primary" />
+                </div>
+              </div>
+              <div className="flex justify-between text-sm sm:text-base py-2 border-b border-border">
+                <span className="text-muted-foreground">Active Courses</span>
+                <span className="font-semibold text-foreground">4</span>
+              </div>
+              <div className="flex justify-between text-sm sm:text-base py-2 border-b border-border">
+                <span className="text-muted-foreground">Late Entries</span>
+                <span className="font-semibold text-foreground">2</span>
+              </div>
+              <div className="flex items-end gap-1.5 h-14 mt-4">
+                {[72, 85, 68, 90, 78, 88, 82].map((h, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 min-w-[10px] rounded-t bg-primary/20"
+                    style={{ height: `${h}%` }}
+                  />
+                ))}
+              </div>
+              <Button variant="secondary" size="sm" className="w-full mt-5">
+                Export Report
+              </Button>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Main Content */}
-      <section className="py-12 sm:py-16 lg:py-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Quick Access Cards */}
-          <div className="max-w-6xl mx-auto mb-16 sm:mb-20">
-            <div className="text-center mb-10 sm:mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-                Quick Access
-              </h2>
-              <p className="text-gray-600 text-lg">
-                Choose your destination to get started
-              </p>
-            </div>
-
-            <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-              {/* Attendance Form Card */}
-              <Link
-                href="/form"
-                className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden"
-                style={{ 
-                  opacity: mounted ? 1 : 0,
-                  transform: mounted ? 'translateY(0)' : 'translateY(1.5rem)',
-                  transitionDelay: '200ms'
-                }}
-              >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-bl-full"></div>
-                <div className="relative p-8 sm:p-10">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                      <svg className="w-5 h-5 text-blue-600 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-                    Attendance Form
-                  </h3>
-                  <p className="text-gray-600 mb-6 leading-relaxed">
-                    Create comprehensive day-wise attendance reports. Fill forms, preview documents, and generate professional print-ready reports.
-                  </p>
-                  <div className="flex items-center text-blue-600 font-semibold">
-                    <span>Access Form</span>
-                    <svg className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </div>
-                </div>
-              </Link>
-
-              {/* Admin Dashboard Card */}
-              <button
-                onClick={handleAdminClick}
-                className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden text-left w-full"
-                style={{ 
-                  opacity: mounted ? 1 : 0,
-                  transform: mounted ? 'translateY(0)' : 'translateY(1.5rem)',
-                  transitionDelay: '300ms'
-                }}
-              >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-500/10 to-transparent rounded-bl-full"></div>
-                <div className="relative p-8 sm:p-10">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
-                      <svg className="w-5 h-5 text-indigo-600 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors">
-                    Admin Dashboard
-                  </h3>
-                  <p className="text-gray-600 mb-6 leading-relaxed">
-                    Comprehensive administrative panel for managing faculty, courses, semesters, and academic configurations.
-                  </p>
-                  <div className="flex items-center text-indigo-600 font-semibold">
-                    <span>Open Dashboard</span>
-                    <svg className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Features Grid */}
-          <div 
-            className="max-w-6xl mx-auto"
-            style={{ 
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? 'translateY(0)' : 'translateY(1rem)',
-              transitionDelay: '400ms'
-            }}
-          >
-            <div className="text-center mb-10 sm:mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-                System Features
-              </h2>
-              <p className="text-gray-600 text-lg">
-                Everything you need for efficient attendance management
-              </p>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[
-                {
-                  icon: (
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  ),
-                  title: 'Intuitive Forms',
-                  description: 'User-friendly interface designed for quick and accurate data entry',
-                  bgClass: 'bg-blue-50 group-hover:bg-blue-100',
-                },
-                {
-                  icon: (
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                  ),
-                  title: 'Print Ready',
-                  description: 'Generate professional A4 format documents optimized for printing',
-                  bgClass: 'bg-green-50 group-hover:bg-green-100',
-                },
-                {
-                  icon: (
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-                    </svg>
-                  ),
-                  title: 'Cloud Database',
-                  description: 'Secure cloud-based storage ensuring data safety and accessibility',
-                  bgClass: 'bg-purple-50 group-hover:bg-purple-100',
-                },
-                {
-                  icon: (
-                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  ),
-                  title: 'Real-time Reports',
-                  description: 'Generate and view attendance reports instantly with accurate calculations',
-                  bgClass: 'bg-orange-50 group-hover:bg-orange-100',
-                },
-                {
-                  icon: (
-                    <svg className="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  ),
-                  title: 'Secure Access',
-                  description: 'Role-based authentication ensuring authorized access to sensitive data',
-                  bgClass: 'bg-pink-50 group-hover:bg-pink-100',
-                },
-                {
-                  icon: (
-                    <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  ),
-                  title: 'Fast & Efficient',
-                  description: 'Optimized performance for quick data processing and report generation',
-                  bgClass: 'bg-teal-50 group-hover:bg-teal-100',
-                },
-              ].map((feature, index) => (
-                <div
-                  key={feature.title}
-                  className="bg-white rounded-xl p-6 border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300 group"
-                  style={{ 
-                    opacity: mounted ? 1 : 0,
-                    transform: mounted ? 'translateY(0)' : 'translateY(1rem)',
-                    transitionDelay: `${500 + index * 50}ms`
-                  }}
-                >
-                  <div className={`w-12 h-12 rounded-lg ${feature.bgClass} flex items-center justify-center mb-4 transition-colors`}>
-                    {feature.icon}
-                  </div>
-                  <h4 className="text-lg font-bold text-gray-900 mb-2">
-                    {feature.title}
-                  </h4>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Features — fluid container */}
+      <section className="relative z-10 container py-12 sm:py-16">
+        <motion.h2
+          className="text-2xl sm:text-3xl font-bold text-center text-foreground mb-2"
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.4 }}
+        >
+          Why Attendify?
+        </motion.h2>
+        <motion.p
+          className="text-center text-muted-foreground mb-10 max-w-xl mx-auto"
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+        >
+          Built for real faculty and real classrooms.
+        </motion.p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+          {[
+            { icon: Zap, title: 'One-click attendance', desc: 'Mark and save sessions in seconds, no spreadsheets.' },
+            { icon: BarChart3, title: 'Admin insights', desc: 'Dashboard with courses, semesters, and reports at a glance.' },
+            { icon: Shield, title: 'Role-based access', desc: 'Secure access control for faculty and admins.' },
+          ].map((f, i) => (
+            <motion.div
+              key={f.title}
+              className="rounded-xl border border-border bg-card p-6 shadow-card hover:shadow-card-hover hover:border-border/80 transition-all"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ duration: 0.4, delay: i * 0.08 }}
+            >
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
+                <f.icon className="h-5 w-5" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">{f.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+            </motion.div>
+          ))}
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-200 bg-gray-50 py-8 sm:py-10">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div 
-            className="text-center"
-            style={{ 
-              opacity: mounted ? 1 : 0,
-              transitionDelay: '600ms'
-            }}
-          >
-            <p className="text-gray-600 text-sm sm:text-base mb-2">
-              © 2025 PES Institute of Technology and Management, Shimoga
-            </p>
-            <p className="text-gray-500 text-sm">
-              Department of Computer Science and Design
-            </p>
-          </div>
+      {/* How it works — fluid container */}
+      <section className="relative z-10 container py-12 sm:py-16">
+        <motion.h2
+          className="text-2xl sm:text-3xl font-bold text-center text-foreground mb-2"
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.4 }}
+        >
+          How it works
+        </motion.h2>
+        <motion.p
+          className="text-center text-muted-foreground mb-10 max-w-xl mx-auto"
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+        >
+          Three steps from course to report.
+        </motion.p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-4">
+          {[
+            { icon: BookOpen, title: 'Select course', desc: 'Choose semester, date, and course. Day attendance loads or is created in one click.' },
+            { icon: FileCheck, title: 'Mark attendance', desc: 'Fill hour-wise sessions with faculty, times, and present count. Save per row.' },
+            { icon: FileOutput, title: 'Export report', desc: 'Finalize the day, preview, and print or save as PDF. Admins browse archives anytime.' },
+          ].map((s, i) => (
+            <motion.div
+              key={s.title}
+              className="relative text-center"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ duration: 0.4, delay: i * 0.1 }}
+            >
+              <div className="flex justify-center mb-4">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                  {i + 1}
+                </span>
+              </div>
+              <div className="h-12 w-12 rounded-xl border border-border bg-card flex items-center justify-center text-primary mx-auto mb-3">
+                <s.icon className="h-6 w-6" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">{s.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer — fluid container */}
+      <footer className="relative z-10 border-t border-border mt-12">
+        <div className="container py-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">Attendify</span> © {new Date().getFullYear()} • Built for PESITM CSD
+          </p>
         </div>
       </footer>
     </div>

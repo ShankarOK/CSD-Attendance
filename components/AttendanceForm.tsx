@@ -6,10 +6,16 @@ import {
   calculatePercentage,
   validateTimeRange
 } from '@/lib/utils'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { Info } from 'lucide-react'
 import Toast from './Toast'
+import { AppShell } from './AppShell'
+import { Card } from './ui/card'
+import { Button } from './ui/button'
+import { Skeleton } from './ui/skeleton'
 
 /**
  * Attendance Form Component
@@ -45,8 +51,11 @@ export default function AttendanceForm() {
   const [dayAttendanceStatus, setDayAttendanceStatus] = useState<'DRAFT' | 'FINALIZED' | null>(null)
   const [isLoadingDayAttendance, setIsLoadingDayAttendance] = useState(false)
   const [savedSessions, setSavedSessions] = useState<Set<number>>(new Set()) // Track which hours are saved
+  const [editingSessions, setEditingSessions] = useState<Set<number>>(new Set()) // Which saved sessions are in edit mode
   const [savingSession, setSavingSession] = useState<number | null>(null) // Track which hour is being saved
   const [isFinalizing, setIsFinalizing] = useState(false)
+  const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false)
+  const [finalizeCountdown, setFinalizeCountdown] = useState(5)
 
   const { 
     register, 
@@ -341,6 +350,7 @@ export default function AttendanceForm() {
           })
           
           setSavedSessions(savedHours)
+          setEditingSessions(new Set())
           
           if (sessions.length > 0) {
             setToast({ 
@@ -430,6 +440,7 @@ export default function AttendanceForm() {
           setDayAttendanceId(null)
           setDayAttendanceStatus(null)
           setSavedSessions(new Set())
+          setEditingSessions(new Set())
         }
         return
       }
@@ -486,6 +497,7 @@ export default function AttendanceForm() {
           })
           
           setSavedSessions(savedHours)
+          setEditingSessions(new Set())
           
           if (data.sessions.length > 0) {
             setToast({ 
@@ -600,6 +612,11 @@ export default function AttendanceForm() {
 
       const result = await response.json()
       setSavedSessions(prev => new Set(prev).add(hourIndex))
+      setEditingSessions(prev => {
+        const next = new Set(prev)
+        next.delete(hourIndex)
+        return next
+      })
       setToast({ message: `Hour ${hourNo} saved successfully ✓`, type: 'success' })
     } catch (error: any) {
       console.error('Error saving session:', error)
@@ -655,7 +672,27 @@ export default function AttendanceForm() {
       setIsFinalizing(false)
     }
   }
-  
+
+  // Countdown for finalize confirmation (5 seconds)
+  useEffect(() => {
+    if (!showFinalizeConfirm) return
+    setFinalizeCountdown(5)
+    const t = setInterval(() => {
+      setFinalizeCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(t)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(t)
+  }, [showFinalizeConfirm])
+
+  const openFinalizeConfirm = () => {
+    setShowFinalizeConfirm(true)
+  }
+
   // Fetch semester data and auto-populate class teacher and total students when semester changes
   useEffect(() => {
     let isCancelled = false
@@ -806,7 +843,7 @@ export default function AttendanceForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 sm:py-6 md:py-8 px-2 sm:px-4">
+    <AppShell>
       {toast && (
         <Toast
           message={toast.message}
@@ -814,33 +851,72 @@ export default function AttendanceForm() {
           onClose={() => setToast(null)}
         />
       )}
-      
-      <div className="max-w-4xl mx-auto w-full">
-        <div className="bg-white rounded-lg sm:rounded-xl shadow-md p-3 sm:p-4 md:p-6 lg:p-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-2 text-center">
+
+      {/* Finalize confirmation modal — 5s countdown before user can continue */}
+      {showFinalizeConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="finalize-confirm-title">
+          <Card className="w-full max-w-md border-2 border-border shadow-2xl p-6">
+            <h2 id="finalize-confirm-title" className="text-lg font-semibold text-foreground mb-2">
+              Finalize day attendance?
+            </h2>
+            <p className="text-muted-foreground mb-4">
+              After finalizing, <strong className="text-foreground">no more sessions can be added or edited</strong>. You will only be able to view and print the report.
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              {finalizeCountdown > 0 ? (
+                <>You can continue in <strong className="text-foreground tabular-nums">{finalizeCountdown}</strong> second{finalizeCountdown !== 1 ? 's' : ''}.</>
+              ) : (
+                <span className="text-green-600 dark:text-green-400 font-medium">You can continue now.</span>
+              )}
+            </p>
+            <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowFinalizeConfirm(false)}
+                className="border-2"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={finalizeCountdown > 0}
+                onClick={() => {
+                  setShowFinalizeConfirm(false)
+                  handleFinalizeDay()
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {finalizeCountdown > 0 ? `Continue in ${finalizeCountdown}s` : 'Continue anyway'}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      <div className="mx-auto w-full max-w-4xl">
+        <Card className="overflow-hidden border-2 shadow-card-hover p-4 sm:p-6 md:p-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2 text-center">
             Create Attendance Report
           </h1>
-          <p className="text-center text-gray-600 mb-4 sm:mb-6 text-xs sm:text-sm">
-            Fill in all required fields marked with <span className="text-red-500">*</span>
+          <p className="text-center text-muted-foreground mb-4 sm:mb-6 text-xs sm:text-sm">
+            Fill in all required fields marked with <span className="text-destructive">*</span>
           </p>
           
           {/* Workflow Info Banner */}
           {dayAttendanceId && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start gap-2">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-blue-900 mb-1">How it works:</h3>
-                  <ol className="text-xs sm:text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                    <li>Select date and semester to auto-load or create day attendance</li>
-                    <li>Fill each hour row with course code, faculty, times, and attendance</li>
-                    <li>Click "Save" on each row to save individual sessions</li>
-                    <li>Click "Finalize Day" when all sessions are complete</li>
-                    <li>Preview and print the finalized attendance report</li>
-                  </ol>
-                </div>
+            <div className="mb-4 sm:mb-6 flex items-start gap-3 rounded-lg border-2 border-primary/20 bg-primary/5 p-4">
+              <Info className="h-5 w-5 shrink-0 text-primary mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-foreground mb-1">How it works</h3>
+                <ol className="text-xs sm:text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                  <li>Select date and semester to auto-load or create day attendance</li>
+                  <li>Fill each hour row with course code, faculty, times, and attendance</li>
+                  <li>Click &quot;Save&quot; on each row to save; header fields lock after first save</li>
+                  <li>To change a saved session, click &quot;Edit&quot; then &quot;Update&quot;</li>
+                  <li>Click &quot;Finalize Day&quot; when all sessions are complete</li>
+                  <li>Preview and print the finalized attendance report</li>
+                </ol>
               </div>
             </div>
           )}
@@ -848,12 +924,12 @@ export default function AttendanceForm() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6" noValidate>
             {/* Section 1: Header Details */}
             <section className="border-b pb-4 sm:pb-6" aria-labelledby="header-details">
-              <h2 id="header-details" className="text-lg sm:text-xl font-semibold text-gray-700 mb-3 sm:mb-4">
+              <h2 id="header-details" className="text-lg sm:text-xl font-semibold text-foreground mb-3 sm:mb-4">
                 Header Details
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full">
                 <div>
-                  <label htmlFor="program" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="program" className="block text-xs sm:text-sm font-medium text-foreground mb-1">
                     Program <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <input
@@ -861,13 +937,13 @@ export default function AttendanceForm() {
                     type="text"
                     value="Bachelor in Engineering"
                     readOnly
-                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed text-sm sm:text-base min-h-[44px]"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-border rounded-md bg-muted cursor-not-allowed text-sm sm:text-base min-h-[44px]"
                     aria-label="Program (read-only): Bachelor in Engineering"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="department" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="department" className="block text-xs sm:text-sm font-medium text-foreground mb-1">
                     Department <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <input
@@ -875,13 +951,13 @@ export default function AttendanceForm() {
                     type="text"
                     value="Computer Science and Design"
                     readOnly
-                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed text-sm sm:text-base min-h-[44px]"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-border rounded-md bg-muted cursor-not-allowed text-sm sm:text-base min-h-[44px]"
                     aria-label="Department (read-only): Computer Science and Design"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="academicYear" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="academicYear" className="block text-xs sm:text-sm font-medium text-foreground mb-1">
                     Academic Year <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <input
@@ -891,7 +967,7 @@ export default function AttendanceForm() {
                     value={currentAcademicYear}
                     readOnly
                     disabled={isLoadingAcademicYear}
-                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-50 text-sm sm:text-base min-h-[44px] cursor-not-allowed"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-border rounded-md bg-muted text-sm sm:text-base min-h-[44px] cursor-not-allowed"
                     aria-invalid={errors.academicYear ? 'true' : 'false'}
                     aria-describedby={errors.academicYear ? 'academicYear-error' : undefined}
                     placeholder={isLoadingAcademicYear ? 'Loading...' : 'Academic year will be auto-filled'}
@@ -909,13 +985,14 @@ export default function AttendanceForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="semester" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="semester" className="block text-xs sm:text-sm font-medium text-foreground mb-1">
                     Semester <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <select
                     id="semester"
                     {...register('semester', { required: 'Semester is required' })}
-                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
+                    disabled={savedSessions.size > 0}
+                    className={`w-full px-3 py-2.5 sm:py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-blue-500 text-sm sm:text-base min-h-[44px] ${savedSessions.size > 0 ? 'bg-muted cursor-not-allowed' : ''}`}
                     aria-invalid={errors.semester ? 'true' : 'false'}
                     aria-describedby={errors.semester ? 'semester-error' : undefined}
                   >
@@ -935,15 +1012,15 @@ export default function AttendanceForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="classTeacher" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="classTeacher" className="block text-xs sm:text-sm font-medium text-foreground mb-1">
                     Class Teacher <span className="text-red-500" aria-label="required">*</span>
-                    <span className="block sm:inline text-xs text-gray-500 sm:ml-2 mt-0.5 sm:mt-0">(Auto-selected based on semester)</span>
+                    <span className="block sm:inline text-xs text-muted-foreground sm:ml-2 mt-0.5 sm:mt-0">(Auto-selected based on semester)</span>
                   </label>
                   <input
                     id="classTeacher"
                     type="text"
                     {...register('classTeacher', { required: 'Class Teacher is required' })}
-                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
+                    className="w-full px-3 py-2.5 sm:py-2 border border-border rounded-md bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
                     readOnly
                     placeholder="Select semester to auto-fill"
                     value={watch('classTeacher') || ''}
@@ -960,14 +1037,15 @@ export default function AttendanceForm() {
 
                 {/* Header-level course fields removed: course selection is per-session in the table below */}
                 <div>
-                  <label htmlFor="date" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="date" className="block text-xs sm:text-sm font-medium text-foreground mb-1">
                     Date <span className="text-red-500" aria-label="required">*</span>
                   </label>
                   <input
                     id="date"
                     type="date"
                     {...register('date', { required: 'Date is required' })}
-                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
+                    disabled={savedSessions.size > 0}
+                    className={`w-full px-3 py-2.5 sm:py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-blue-500 text-sm sm:text-base min-h-[44px] ${savedSessions.size > 0 ? 'bg-muted cursor-not-allowed' : ''}`}
                     aria-invalid={errors.date ? 'true' : 'false'}
                     aria-describedby={errors.date ? 'date-error' : undefined}
                   />
@@ -979,9 +1057,9 @@ export default function AttendanceForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="totalStudents" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="totalStudents" className="block text-xs sm:text-sm font-medium text-foreground mb-1">
                     Total Number of Students <span className="text-red-500" aria-label="required">*</span>
-                    <span className="block sm:inline text-xs text-gray-500 sm:ml-2 mt-0.5 sm:mt-0">(Auto-filled from semester, editable)</span>
+                    <span className="block sm:inline text-xs text-muted-foreground sm:ml-2 mt-0.5 sm:mt-0">(Auto-filled from semester{savedSessions.size > 0 ? ', locked after first session saved' : ', editable'})</span>
                   </label>
                   <input
                     id="totalStudents"
@@ -991,7 +1069,8 @@ export default function AttendanceForm() {
                       min: { value: 1, message: 'Must be at least 1' },
                       valueAsNumber: true,
                     })}
-                    className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base min-h-[44px]"
+                    disabled={savedSessions.size > 0}
+                    className={`w-full px-3 py-2.5 sm:py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-blue-500 text-sm sm:text-base min-h-[44px] ${savedSessions.size > 0 ? 'bg-muted cursor-not-allowed' : ''}`}
                     placeholder="e.g., 50"
                     aria-invalid={errors.totalStudents ? 'true' : 'false'}
                     aria-describedby={errors.totalStudents ? 'totalStudents-error' : undefined}
@@ -1008,19 +1087,19 @@ export default function AttendanceForm() {
             {/* Section 2: Hour Table */}
             <section className="border-b pb-4 sm:pb-6" aria-labelledby="hour-table">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
-                <h2 id="hour-table" className="text-lg sm:text-xl font-semibold text-gray-700">
+                <h2 id="hour-table" className="text-lg sm:text-xl font-semibold text-foreground">
                   Hour Table (8 Hours)
                 </h2>
                 {!areHeadersComplete && (
-                  <span className="text-xs sm:text-sm text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                  <span className="text-xs sm:text-sm text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded">
                     Please fill all header fields to enable hour table
                   </span>
                 )}
                 <div className="flex items-center gap-2 flex-wrap">
                   {isLoadingDayAttendance && (
-                    <span className="text-xs sm:text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
-                      <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                      Loading saved sessions...
+                    <span className="text-xs sm:text-sm text-muted-foreground bg-muted/50 px-2 py-1.5 rounded-md flex items-center gap-2">
+                      <Skeleton className="h-3 w-3 rounded-full shrink-0" />
+                      <Skeleton className="h-3 w-24" />
                     </span>
                   )}
                   {dayAttendanceId && dayAttendanceStatus === 'DRAFT' && (
@@ -1029,7 +1108,7 @@ export default function AttendanceForm() {
                     </span>
                   )}
                   {dayAttendanceStatus === 'FINALIZED' && (
-                    <span className="text-xs sm:text-sm font-semibold text-green-600 bg-green-50 px-2 py-1 rounded flex items-center gap-1">
+                    <span className="text-xs sm:text-sm font-semibold text-green-600 bg-primary/10 px-2 py-1 rounded flex items-center gap-1">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
@@ -1040,18 +1119,18 @@ export default function AttendanceForm() {
               </div>
               <div className="overflow-x-auto -mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 px-3 sm:px-4 md:px-6 lg:px-8">
                 <div className="inline-block min-w-full align-middle">
-                  <table className="min-w-[800px] sm:min-w-full border-collapse border border-gray-300" role="table" aria-label="Hour table">
+                  <table className="min-w-[800px] sm:min-w-full border-collapse border border-border" role="table" aria-label="Hour table">
                     <thead>
-                      <tr className="bg-gray-100">
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[60px]">Hour</th>
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Room</th>
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Start</th>
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">End</th>
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[120px]">Course Code</th>
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[150px]">Faculty</th>
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Present</th>
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Absent</th>
-                        <th className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Action</th>
+                      <tr className="bg-muted">
+                        <th className="border border-border px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[60px]">Hour</th>
+                        <th className="border border-border px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Room</th>
+                        <th className="border border-border px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Start</th>
+                        <th className="border border-border px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">End</th>
+                        <th className="border border-border px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[120px]">Course Code</th>
+                        <th className="border border-border px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[150px]">Faculty</th>
+                        <th className="border border-border px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Present</th>
+                        <th className="border border-border px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Absent</th>
+                        <th className="border border-border px-2 sm:px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm font-semibold whitespace-nowrap min-w-[100px]">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1059,31 +1138,32 @@ export default function AttendanceForm() {
                         const hourStart = watch(`hours.${i}.start`)
                         const hourData = watch(`hours.${i}`)
                         const isSaved = savedSessions.has(i)
+                        const isEditing = editingSessions.has(i)
                         const isSaving = savingSession === i
-                        const isDisabled = dayAttendanceStatus === 'FINALIZED' || !areHeadersComplete
+                        const isDisabled = dayAttendanceStatus === 'FINALIZED' || !areHeadersComplete || (isSaved && !isEditing)
                         
                         return (
-                          <tr key={i} className={isSaved ? 'bg-green-50' : ''}>
-                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2 text-xs sm:text-sm text-center font-medium">{i + 1}</td>
-                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                          <tr key={i} className={isSaved && !isEditing ? 'bg-primary/10' : ''}>
+                            <td className="border border-border px-2 sm:px-3 py-2.5 sm:py-2 text-xs sm:text-sm text-center font-medium">{i + 1}</td>
+                            <td className="border border-border px-2 sm:px-3 py-2.5 sm:py-2">
                               <input
                                 {...register(`hours.${i}.room`)}
                                 disabled={isDisabled}
-                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-ring text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-muted cursor-not-allowed' : ''}`}
                                 placeholder="Room"
                                 aria-label={`Room number for hour ${i + 1}`}
                               />
                             </td>
-                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                            <td className="border border-border px-2 sm:px-3 py-2.5 sm:py-2">
                               <input
                                 type="time"
                                 {...register(`hours.${i}.start`)}
                                 disabled={isDisabled}
-                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-ring text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-muted cursor-not-allowed' : ''}`}
                                 aria-label={`Start time for hour ${i + 1}`}
                               />
                             </td>
-                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                            <td className="border border-border px-2 sm:px-3 py-2.5 sm:py-2">
                               <input
                                 type="time"
                                 {...register(`hours.${i}.end`, {
@@ -1093,7 +1173,7 @@ export default function AttendanceForm() {
                                   }
                                 })}
                                 disabled={isDisabled}
-                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-ring text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-muted cursor-not-allowed' : ''}`}
                                 aria-label={`End time for hour ${i + 1}`}
                               />
                               {errors.hours?.[i]?.end && (
@@ -1102,11 +1182,11 @@ export default function AttendanceForm() {
                                 </p>
                               )}
                             </td>
-                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                            <td className="border border-border px-2 sm:px-3 py-2.5 sm:py-2">
                               <select
                                 {...register(`hours.${i}.courseCode`)}
                                 disabled={isDisabled || isLoadingCourses || !semester}
-                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-ring text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-muted cursor-not-allowed' : ''}`}
                                 aria-label={`Course code for hour ${i + 1}`}
                               >
                                 <option value="">Select</option>
@@ -1117,11 +1197,11 @@ export default function AttendanceForm() {
                                 ))}
                               </select>
                             </td>
-                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                            <td className="border border-border px-2 sm:px-3 py-2.5 sm:py-2">
                               <select
                                 {...register(`hours.${i}.courseFaculty`)}
                                 disabled={isDisabled || isLoadingFaculty}
-                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-ring text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-muted cursor-not-allowed' : ''}`}
                                 aria-label={`Faculty for hour ${i + 1}`}
                               >
                                 <option value="">Select</option>
@@ -1132,7 +1212,7 @@ export default function AttendanceForm() {
                                 ))}
                               </select>
                             </td>
-                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
+                            <td className="border border-border px-2 sm:px-3 py-2.5 sm:py-2">
                               <input
                                 type="number"
                                 {...register(`hours.${i}.present`, {
@@ -1141,7 +1221,7 @@ export default function AttendanceForm() {
                                   valueAsNumber: true,
                                 })}
                                 disabled={isDisabled}
-                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                className={`w-full px-2 py-2 sm:py-1.5 border-0 focus:outline-none focus:ring-1 focus:ring-ring text-xs sm:text-sm min-h-[36px] ${isDisabled ? 'bg-muted cursor-not-allowed' : ''}`}
                                 placeholder="0"
                                 aria-label={`Students present for hour ${i + 1}`}
                                 onKeyDown={(e) => {
@@ -1163,40 +1243,46 @@ export default function AttendanceForm() {
                                 }}
                               />
                             </td>
-                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
-                              <div className="text-xs text-gray-500 text-center">
+                            <td className="border border-border px-2 sm:px-3 py-2.5 sm:py-2">
+                              <div className="text-xs text-muted-foreground text-center">
                                 {totalStudents > 0 && hourData.present !== undefined
                                   ? Math.max(0, totalStudents - (hourData.present || 0))
                                   : '-'}
                               </div>
                             </td>
-                            <td className="border border-gray-300 px-2 sm:px-3 py-2.5 sm:py-2">
-                              {isSaved ? (
-                                <span className="text-xs text-green-600 font-semibold flex items-center justify-center gap-1">
-                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            <td className="border border-border px-2 sm:px-3 py-2.5 sm:py-2">
+                              {isSaved && !isEditing ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingSessions(prev => new Set(prev).add(i))}
+                                  disabled={dayAttendanceStatus === 'FINALIZED'}
+                                  className="w-full px-2 py-1 text-xs font-medium text-primary border-2 border-primary rounded hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
+                                  aria-label={`Edit hour ${i + 1}`}
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                   </svg>
-                                  Saved
-                                </span>
+                                  Edit
+                                </button>
                               ) : (
                                 <button
                                   type="button"
                                   onClick={() => handleSaveSession(i)}
                                   disabled={isDisabled || isSaving || !dayAttendanceId}
                                   className="w-full px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
-                                  aria-label={`Save hour ${i + 1}`}
+                                  aria-label={isSaved ? `Update hour ${i + 1}` : `Save hour ${i + 1}`}
                                 >
                                   {isSaving ? (
                                     <>
-                                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                      Saving...
+                                      <Skeleton className="h-3 w-3 rounded-full shrink-0 bg-foreground/20" />
+                                      <Skeleton className="h-3 w-12 bg-foreground/20" />
                                     </>
                                   ) : (
                                     <>
                                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                       </svg>
-                                      Save
+                                      {isSaved ? 'Update' : 'Save'}
                                     </>
                                   )}
                                 </button>
@@ -1213,7 +1299,7 @@ export default function AttendanceForm() {
               {/* Add Row button - Note: Currently showing all 8 hours by default */}
               {dayAttendanceStatus === 'DRAFT' && dayAttendanceId && (
                 <div className="mt-4 flex justify-end">
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted-foreground">
                     All 8 hours are available. Fill and save each session individually.
                   </div>
                 </div>
@@ -1228,7 +1314,7 @@ export default function AttendanceForm() {
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-2.5 border-2 border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm sm:text-base font-medium min-h-[44px]"
+                  className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-2.5 border-2 border-border rounded-md text-foreground hover:bg-muted active:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring text-sm sm:text-base font-medium min-h-[44px]"
                   aria-label="Cancel and return to home"
                 >
                   Cancel
@@ -1236,15 +1322,15 @@ export default function AttendanceForm() {
                 {dayAttendanceId && dayAttendanceStatus === 'DRAFT' && (
                   <button
                     type="button"
-                    onClick={handleFinalizeDay}
+                    onClick={openFinalizeConfirm}
                     disabled={isFinalizing || savedSessions.size === 0}
                     className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-2.5 bg-green-600 text-white rounded-md hover:bg-green-700 active:bg-green-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm sm:text-base min-h-[44px] flex items-center justify-center gap-2"
                     aria-label={isFinalizing ? 'Finalizing...' : 'Finalize Day Attendance'}
                   >
                     {isFinalizing ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Finalizing...
+                        <Skeleton className="h-4 w-4 rounded-full shrink-0 bg-foreground/20" />
+                        <Skeleton className="h-4 w-20 bg-foreground/20" />
                       </>
                     ) : (
                       <>
@@ -1260,10 +1346,15 @@ export default function AttendanceForm() {
               <button
                 type="submit"
                 disabled={isSubmitting || dayAttendanceStatus !== 'FINALIZED'}
-                className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 active:bg-blue-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm sm:text-base min-h-[44px] flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 active:bg-blue-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-sm sm:text-base min-h-[44px] flex items-center justify-center gap-2"
                 aria-label={isSubmitting ? 'Submitting form...' : dayAttendanceStatus === 'FINALIZED' ? 'Preview and Print Report' : 'Finalize day attendance first'}
               >
-                {dayAttendanceStatus === 'FINALIZED' ? (
+                {isSubmitting ? (
+                  <>
+                    <Skeleton className="h-4 w-4 rounded-full shrink-0 bg-foreground/20" />
+                    <Skeleton className="h-4 w-24 bg-foreground/20" />
+                  </>
+                ) : dayAttendanceStatus === 'FINALIZED' ? (
                   <>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -1281,8 +1372,8 @@ export default function AttendanceForm() {
               </button>
             </div>
           </form>
-        </div>
+        </Card>
       </div>
-    </div>
+    </AppShell>
   )
 }

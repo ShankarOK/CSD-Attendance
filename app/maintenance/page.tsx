@@ -104,19 +104,19 @@ export default function MaintenancePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center px-4 py-12 relative overflow-hidden">
-      {/* Animated Background Elements */}
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      {/* Subtle background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full filter blur-3xl opacity-40" />
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-primary/5 rounded-full filter blur-3xl opacity-40" />
+        <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-primary/10 rounded-full filter blur-3xl opacity-40" />
       </div>
 
       <div className="max-w-2xl w-full relative z-10">
-        {/* Glassmorphism Card */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 sm:p-12 relative overflow-hidden">
+        {/* Card */}
+        <div className="bg-card/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-border p-8 sm:p-12 relative overflow-hidden">
           {/* Shimmer Effect */}
-          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-primary/5 to-transparent" />
 
           {/* Content */}
           <div className="relative z-10">
@@ -144,12 +144,12 @@ export default function MaintenancePage() {
             </div>
 
             {/* Title */}
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-4 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-foreground mb-4 text-center">
               🚧 Under Development
             </h1>
 
             {/* Message */}
-            <p className="text-lg sm:text-xl text-gray-700 mb-8 text-center leading-relaxed">
+            <p className="text-lg sm:text-xl text-muted-foreground mb-8 text-center leading-relaxed">
               We're currently performing maintenance and improvements to serve you better.
             </p>
 
@@ -165,7 +165,7 @@ export default function MaintenancePage() {
                       We are back online!
                     </h2>
                   </div>
-                  <p className="text-gray-600 text-sm sm:text-base">
+                  <p className="text-muted-foreground text-sm sm:text-base">
                     Redirecting you to the homepage...
                   </p>
                 </div>
@@ -177,7 +177,7 @@ export default function MaintenancePage() {
                     Expected downtime: We'll be back in
                   </p>
                   <div className="text-center">
-                    <div className="inline-block bg-white rounded-xl px-6 py-4 shadow-lg border-2 border-blue-300">
+                    <div className="inline-block bg-card rounded-xl px-6 py-4 shadow-lg border-2 border-border">
                       <div className="text-4xl sm:text-5xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 tabular-nums">
                         {formatTimeRemaining()}
                       </div>
@@ -188,11 +188,11 @@ export default function MaintenancePage() {
             )}
 
             {/* Institution Info */}
-            <div className="mt-8 pt-6 border-t border-gray-200/50">
-              <p className="text-sm text-gray-600 text-center font-medium">
+            <div className="mt-8 pt-6 border-t border-border">
+              <p className="text-sm text-foreground text-center font-medium">
                 PES Institute of Technology and Management, Shimoga
               </p>
-              <p className="text-sm text-gray-500 text-center mt-1">
+              <p className="text-sm text-muted-foreground text-center mt-1">
                 Department of Computer Science and Design
               </p>
             </div>
@@ -215,7 +215,7 @@ export default function MaintenancePage() {
                   onClick={() => setShowAdminHint(!showAdminHint)}
                   onMouseEnter={() => setShowAdminHint(true)}
                   onMouseLeave={() => setShowAdminHint(false)}
-                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors px-3 py-2 rounded-lg hover:bg-gray-100/50"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-lg hover:bg-muted/50"
                   aria-label="Admin hint"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,11 +223,11 @@ export default function MaintenancePage() {
                   </svg>
                 </button>
                 {showAdminHint && (
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl z-20">
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-card border border-border text-foreground text-xs rounded-lg p-3 shadow-xl z-20">
                     <p className="mb-1 font-semibold">Admin?</p>
-                    <p className="text-gray-300">Use <code className="bg-gray-800 px-1 py-0.5 rounded">/admin-bypass?key=...</code></p>
+                    <p className="text-muted-foreground">Use <code className="bg-muted px-1 py-0.5 rounded">/admin-bypass?key=...</code></p>
                     <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                      <div className="w-2 h-2 bg-gray-900 rotate-45"></div>
+                      <div className="w-2 h-2 bg-card border-l border-t border-border rotate-45"></div>
                     </div>
                   </div>
                 )}

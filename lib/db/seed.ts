@@ -211,25 +211,6 @@ async function seedDatabase() {
       }
     }
 
-    console.log('\nCreating admin_users table if it does not exist...');
-    
-    // Create admin_users table
-    await sql`
-      CREATE TABLE IF NOT EXISTS admin_users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(255) NOT NULL UNIQUE,
-        password_hash VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `;
-
-    await sql`
-      CREATE INDEX IF NOT EXISTS idx_admin_users_username ON admin_users(username)
-    `;
-
-    console.log('Admin users table created successfully!');
-
     console.log('\nCreating academic_year_settings table if it does not exist...');
     
     // Create academic_year_settings table

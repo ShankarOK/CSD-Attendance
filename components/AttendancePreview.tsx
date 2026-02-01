@@ -7,12 +7,14 @@ import {
     getDayName
 } from '@/lib/utils'
 
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useReactToPrint } from 'react-to-print'
 import Toast from './Toast'
+import { AppShell } from './AppShell'
+import { Button } from './ui/button'
+import { Skeleton } from './ui/skeleton'
 
 /**
  * Read-Only Attendance Preview Component
@@ -83,24 +85,32 @@ export default function AttendancePreview() {
   // Load finalized attendance data if dayAttendanceId is provided
   useEffect(() => {
     async function loadFinalizedData() {
-      if (!dayAttendanceIdParam) {
-        // No dayAttendanceId - redirect to form
+      const id = dayAttendanceIdParam ? parseInt(dayAttendanceIdParam, 10) : NaN
+      if (!dayAttendanceIdParam || isNaN(id) || id < 1) {
+        // No or invalid dayAttendanceId - redirect to form
+        setToast({ message: 'Invalid or missing attendance ID. Please start from the form.', type: 'error' })
         router.push('/form')
         return
       }
 
       try {
         setIsLoadingFinalizedData(true)
-        const response = await fetch(`/api/attendance/day/${dayAttendanceIdParam}/print`)
+        const response = await fetch(`/api/attendance/day/${id}/print`)
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
+          const message = errorData.error || 'Failed to load finalized attendance data'
           if (response.status === 403) {
-            // Day not finalized - redirect to form
+            setToast({ message: 'This report is not finalized yet.', type: 'error' })
             router.push('/form')
+            setIsLoadingFinalizedData(false)
             return
           }
-          throw new Error(errorData.error || 'Failed to load finalized attendance data')
+          // Invalid ID, not found, or other API error - show message and redirect
+          setToast({ message, type: 'error' })
+          setTimeout(() => router.push('/form'), 2000)
+          setIsLoadingFinalizedData(false)
+          return
         }
 
         const data = await response.json()
@@ -181,7 +191,7 @@ export default function AttendancePreview() {
   }, [setValue])
 
   const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
+    contentRef: componentRef,
     documentTitle: `Attendance_Report_${date || 'report'}`,
     onBeforeGetContent: () => {
       setIsPrinting(true)
@@ -223,13 +233,28 @@ export default function AttendancePreview() {
     handlePrint()
   }
 
+  // Ctrl+P / Cmd+P: use same print flow as the Print button (react-to-print)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        const canPrint = !isLoadingFinalizedData && loadedSessions.length > 0 && !isPrinting
+        if (canPrint) {
+          e.preventDefault()
+          handlePrint()
+        }
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isLoadingFinalizedData, loadedSessions.length, isPrinting])
+
   // Format date with day name
   const formattedDate = date 
     ? `${formatDateAcademic(date)} (${getDayName(date)})`
     : ''
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-4 sm:py-8 px-2 sm:px-4">
+    <AppShell>
       {toast && (
         <Toast
           message={toast.message}
@@ -238,74 +263,76 @@ export default function AttendancePreview() {
         />
       )}
 
-      {isLoadingFinalizedData && (
-        <div className="max-w-6xl mx-auto mb-4 p-4 bg-white rounded-lg shadow-md">
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-sm font-medium text-gray-700">Loading finalized attendance data...</span>
-          </div>
-        </div>
-      )}
-
-      <div className="max-w-6xl mx-auto">
+      <div className="w-full max-w-6xl mx-auto">
         {/* Header Section - No Print */}
         <div className="mb-4 sm:mb-8 no-print">
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-100">
+          <div className="rounded-xl sm:rounded-2xl border border-border bg-card shadow-card p-4 sm:p-6 mb-4 sm:mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1 sm:mb-2">
                   Attendance Report - Print View
                 </h1>
-                <p className="text-sm sm:text-base text-gray-600">
+                <p className="text-sm sm:text-base text-muted-foreground">
                   PES Institute of Technology and Management, Shimoga - Department of Computer Science and Design
                 </p>
-                <p className="text-xs sm:text-sm text-gray-500 mt-2">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                   This is a read-only view. Only HOD remarks can be edited.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                <Link
-                  href={dayAttendanceIdParam ? `/form?dayAttendanceId=${dayAttendanceIdParam}` : '/form'}
-                  className="px-4 sm:px-6 py-2 sm:py-3 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-semibold rounded-lg flex items-center justify-center gap-2 text-sm sm:text-base"
-                  title="Back to Edit Form"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                  <span>Back to Edit</span>
-                </Link>
-                <button
+                <Button
+                  type="button"
                   onClick={handlePrintClick}
-                  disabled={isPrinting}
-                  className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2 text-sm sm:text-base"
-                  aria-label={isPrinting ? 'Printing...' : 'Continue to print'}
+                  disabled={isPrinting || isLoadingFinalizedData || loadedSessions.length === 0}
+                  size="lg"
+                  className="gap-2 shadow-glow-sm hover:shadow-glow disabled:opacity-60 disabled:cursor-not-allowed"
+                  aria-label={isPrinting ? 'Printing...' : isLoadingFinalizedData || loadedSessions.length === 0 ? 'Loading report...' : 'Print report'}
                 >
                   {isPrinting ? (
                     <>
-                      <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span>Printing...</span>
+                      <span className="h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-primary-foreground/30 animate-pulse shrink-0 block" />
+                      <span className="h-4 w-16 sm:w-20 bg-primary-foreground/30 rounded animate-pulse block" />
                     </>
                   ) : (
                     <>
                       <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                       </svg>
-                      <span>Continue</span>
+                      <span>Print</span>
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Read-Only Printable Content */}
+        {/* During load: skeleton; after load: printable content */}
+        {isLoadingFinalizedData ? (
+          <div className="bg-card rounded-xl sm:rounded-2xl border border-border overflow-hidden shadow-2xl no-print" aria-busy="true" aria-label="Loading report">
+            <div className="p-4 sm:p-6 border-b border-border">
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-4 w-full max-w-md" />
+            </div>
+            <div className="p-4 sm:p-6 border-b border-border">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={`skeleton-info-${i}`} className="h-9 w-full" />
+                ))}
+              </div>
+            </div>
+            <div className="p-4 sm:p-6 overflow-x-auto">
+              <Skeleton className="h-10 w-full mb-2" />
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={`skeleton-row-${i}`} className="h-12 w-full mb-1 last:mb-0" />
+              ))}
+            </div>
+          </div>
+        ) : (
+        <>
         <form 
           ref={componentRef} 
-          className={`bg-white print-container print-centered print-${printOrientation} shadow-2xl rounded-xl sm:rounded-2xl border border-gray-200 overflow-hidden no-print-shadow`}
+          className={`bg-card print-container print-centered print-${printOrientation} shadow-2xl rounded-xl sm:rounded-2xl border border-border overflow-hidden no-print-shadow`}
           role="document"
           aria-label="Attendance Report"
         >
@@ -414,7 +441,7 @@ export default function AttendancePreview() {
               <tbody>
                 {loadedSessions.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="print-td text-center text-gray-500">
+                    <td colSpan={9} className="print-td text-center text-muted-foreground">
                       No session data available
                     </td>
                   </tr>
@@ -521,7 +548,9 @@ export default function AttendancePreview() {
             </div>
           </div>
         </form>
+        </>
+        )}
       </div>
-    </div>
+    </AppShell>
   )
 }

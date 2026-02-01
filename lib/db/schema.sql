@@ -38,18 +38,6 @@ CREATE TABLE IF NOT EXISTS courses (
 CREATE INDEX IF NOT EXISTS idx_courses_semester ON courses(semester);
 CREATE INDEX IF NOT EXISTS idx_courses_code ON courses(course_code);
 
--- Create admin users table
-CREATE TABLE IF NOT EXISTS admin_users (
-  id SERIAL PRIMARY KEY,
-  username VARCHAR(255) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create index for faster queries
-CREATE INDEX IF NOT EXISTS idx_admin_users_username ON admin_users(username);
-
 -- Create academic year settings table
 CREATE TABLE IF NOT EXISTS academic_year_settings (
   id SERIAL PRIMARY KEY,

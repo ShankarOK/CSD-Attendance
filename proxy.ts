@@ -1,15 +1,16 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { AUTH_COOKIE_NAME, verifyAuthToken } from './lib/auth'
+import { sessionExists } from './lib/session'
 
 /**
- * Maintenance Mode + Authentication Middleware
- * 
+ * Maintenance Mode + Authentication Proxy
+ *
  * Environment Variables Required:
  * - MAINTENANCE_MODE: 'true' | 'false' (default: 'false')
  * - MAINTENANCE_SECRET: Secret key for admin bypass
  * - JWT_SECRET: secret for signed auth cookie (HS256)
- * 
+ *
  * Behavior:
  * Maintenance Mode:
  *    - If MAINTENANCE_MODE=true → Redirect users to /maintenance
@@ -20,7 +21,7 @@ import { AUTH_COOKIE_NAME, verifyAuthToken } from './lib/auth'
  *    - Non-public routes require valid auth cookie
  *    - /admin and /api/admin/* require role=admin
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Always let Next internal assets through
@@ -49,7 +50,7 @@ export function middleware(request: NextRequest) {
     return redirectToLogin(request)
   }
 
-  // Verify token (async) - middleware supports async return
+  // Verify token (async) - proxy supports async return
   return verifyAndAuthorize(request, token)
 }
 
@@ -58,7 +59,7 @@ export function middleware(request: NextRequest) {
  */
 function handleMaintenanceMode(request: NextRequest, opts: { isPublic: boolean }) {
   const maintenanceMode = process.env.MAINTENANCE_MODE === 'true'
-  
+
   // If maintenance mode is OFF, allow request
   if (!maintenanceMode) {
     return null
@@ -77,7 +78,7 @@ function handleMaintenanceMode(request: NextRequest, opts: { isPublic: boolean }
     '/register',
   ]
 
-  const isAllowedPath = allowedPaths.some(path => 
+  const isAllowedPath = allowedPaths.some(path =>
     pathname === path || pathname.startsWith(path)
   )
 
@@ -94,7 +95,7 @@ function handleMaintenanceMode(request: NextRequest, opts: { isPublic: boolean }
   // Redirect to maintenance page
   const maintenanceUrl = new URL('/maintenance', request.url)
   maintenanceUrl.searchParams.set('redirect', pathname)
-  
+
   return NextResponse.redirect(maintenanceUrl)
 }
 
@@ -114,7 +115,6 @@ async function verifyAndAuthorize(request: NextRequest, token: string) {
   const { pathname } = request.nextUrl
   const decoded = await verifyAuthToken(token)
   if (!decoded) {
-    // Clear invalid token and redirect/401
     if (pathname.startsWith('/api')) {
       const res = NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       res.cookies.delete(AUTH_COOKIE_NAME)
@@ -123,6 +123,21 @@ async function verifyAndAuthorize(request: NextRequest, token: string) {
     const res = redirectToLogin(request)
     res.cookies.delete(AUTH_COOKIE_NAME)
     return res
+  }
+
+  // If token has sessionId, ensure session still exists (revoked sessions)
+  if (decoded.sessionId) {
+    const exists = await sessionExists(decoded.sessionId)
+    if (!exists) {
+      if (pathname.startsWith('/api')) {
+        const res = NextResponse.json({ error: 'Session expired' }, { status: 401 })
+        res.cookies.delete(AUTH_COOKIE_NAME)
+        return res
+      }
+      const res = redirectToLogin(request)
+      res.cookies.delete(AUTH_COOKIE_NAME)
+      return res
+    }
   }
 
   // Admin-only routes
@@ -138,7 +153,7 @@ async function verifyAndAuthorize(request: NextRequest, token: string) {
   return NextResponse.next()
 }
 
-// Configure which routes this middleware runs on
+// Configure which routes this proxy runs on
 export const config = {
   matcher: [
     /*

@@ -2,6 +2,20 @@
  * Utility functions for attendance report formatting and calculations
  */
 
+/** Merge class names (shadcn-style). Accepts strings and object (keys with truthy values). */
+export function cn(
+  ...inputs: (string | undefined | false | null | Record<string, boolean | undefined | null>)[]
+): string {
+  const out: string[] = []
+  for (const x of inputs) {
+    if (typeof x === 'string' && x) out.push(x)
+    if (x && typeof x === 'object' && !Array.isArray(x)) {
+      for (const [k, v] of Object.entries(x)) if (v) out.push(k)
+    }
+  }
+  return out.join(' ')
+}
+
 /**
  * Formats a date string to DD/MM/YYYY format
  * @param dateString - ISO date string (YYYY-MM-DD)

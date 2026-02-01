@@ -2,6 +2,7 @@ import { neon } from '@neondatabase/serverless'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { AUTH_COOKIE_NAME, getAuthCookieOptions, signAuthToken, type UserRole } from '@/lib/auth'
 
 export const runtime = 'nodejs'
@@ -56,12 +57,19 @@ export async function POST(request: Request) {
 
     const user = created[0] as { id: number; username: string; role: UserRole; teacher_id: number | null }
 
-    // Auto-login after registration (creates session cookie)
+    const sessionId = randomUUID()
+    const userAgent = request.headers.get('user-agent') || null
+    await sql`
+      INSERT INTO sessions (id, user_id, user_agent)
+      VALUES (${sessionId}, ${user.id}, ${userAgent})
+    `
+
     const token = await signAuthToken({
       userId: user.id,
       username: user.username,
       role: user.role,
       teacherId: user.teacher_id,
+      sessionId,
     })
 
     const cookieStore = await cookies()

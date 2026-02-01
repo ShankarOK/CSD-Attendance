@@ -3,7 +3,14 @@
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
+import { ClipboardCheck } from 'lucide-react'
 import Toast from '@/components/Toast'
+import { AuthCardSkeleton } from '@/components/skeletons'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 function LoginContent() {
   const searchParams = useSearchParams()
@@ -42,9 +49,9 @@ function LoginContent() {
       setTimeout(() => {
         window.location.href = redirectTo
       }, 450)
-    } catch (err: any) {
+    } catch (err: unknown) {
       setToast({
-        message: err?.name === 'AbortError' ? 'Request timed out. Try again.' : 'Login failed. Try again.',
+        message: (err as { name?: string })?.name === 'AbortError' ? 'Request timed out. Try again.' : 'Login failed. Try again.',
         type: 'error',
       })
       setIsLoading(false)
@@ -52,63 +59,69 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-background flex items-center justify-center px-3 sm:px-4 py-8 sm:py-12 relative">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
 
       <div className="w-full max-w-md">
-        <div className="bg-white/80 backdrop-blur rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Sign in</h1>
-              <p className="text-sm text-gray-600 mt-1">Access Attendify</p>
+        <Card className="border-2 shadow-card-hover">
+          <CardHeader className="space-y-1 pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-glow-sm">
+                  <ClipboardCheck className="h-6 w-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl sm:text-3xl">Sign in</CardTitle>
+                  <CardDescription className="mt-0.5">Use your account to continue</CardDescription>
+                </div>
+              </div>
+              <Link href="/" className="text-sm font-semibold text-primary hover:underline">
+                Back to home
+              </Link>
             </div>
-            <Link href="/" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700">
-              Back to home
-            </Link>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-              <input
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                disabled={isLoading}
-                autoComplete="username"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input
-                type="password"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                autoComplete="current-password"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full rounded-lg bg-indigo-600 text-white font-semibold py-3 hover:bg-indigo-700 disabled:opacity-60"
-            >
-              {isLoading ? 'Signing in…' : 'Sign in'}
-            </button>
-          </form>
-
-          <div className="mt-6 text-sm text-gray-600">
-            Don’t have an account?{' '}
-            <Link href="/register" className="font-semibold text-indigo-600 hover:text-indigo-700">
-              Create one
-            </Link>
-          </div>
-        </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  disabled={isLoading}
+                  autoComplete="username"
+                  required
+                  placeholder="Enter your username"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  autoComplete="current-password"
+                  required
+                  placeholder="Enter your password"
+                />
+              </div>
+              <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                {isLoading ? 'Signing in…' : 'Sign in'}
+              </Button>
+            </form>
+            <p className="text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{' '}
+              <Link href="/register" className="font-semibold text-primary hover:underline">
+                Create one
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
@@ -116,15 +129,8 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
-    >
+    <Suspense fallback={<AuthCardSkeleton />}>
       <LoginContent />
     </Suspense>
   )
 }
-

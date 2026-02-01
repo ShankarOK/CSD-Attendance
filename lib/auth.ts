@@ -14,6 +14,7 @@ export type AuthTokenPayload = {
   username: string
   role: UserRole
   teacherId: number | null
+  sessionId?: string | null
 }
 
 function getJwtSecretKey(): Uint8Array {
@@ -38,12 +39,14 @@ export function getAuthCookieOptions() {
 
 export async function signAuthToken(payload: AuthTokenPayload): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
-  return await new SignJWT({
+  const claims: Record<string, unknown> = {
     userId: payload.userId,
     username: payload.username,
     role: payload.role,
     teacherId: payload.teacherId,
-  })
+  }
+  if (payload.sessionId) claims.sessionId = payload.sessionId
+  return await new SignJWT(claims)
     .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
     .setIssuedAt(now)
     .setExpirationTime(now + 60 * 60 * 24 * 7)
@@ -70,7 +73,14 @@ export async function verifyAuthToken(token: string): Promise<AuthTokenPayload |
     if (!username || !role) return null
     if (teacherId !== null && !Number.isFinite(teacherId)) return null
 
-    return { userId, username, role, teacherId }
+    const sessionId =
+      payload.sessionId === undefined || payload.sessionId === null
+        ? null
+        : typeof payload.sessionId === 'string'
+          ? payload.sessionId
+          : null
+
+    return { userId, username, role, teacherId, sessionId }
   } catch {
     return null
   }

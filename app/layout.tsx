@@ -1,5 +1,14 @@
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 import './globals.css'
+import { ThemeProvider } from '@/components/ThemeProvider'
+import { AppChrome } from '@/components/AppChrome'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: {
@@ -53,13 +62,17 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#4f46e5" />
       </head>
-      <body className="font-sans antialiased">{children}</body>
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <ThemeProvider>
+          <AppChrome>{children}</AppChrome>
+        </ThemeProvider>
+      </body>
     </html>
   )
 }

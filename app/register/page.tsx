@@ -2,13 +2,18 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import { UserPlus } from 'lucide-react'
 import Toast from '@/components/Toast'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { cn } from '@/lib/utils'
 
 type Teacher = { id: number; name: string }
-type Role = 'teacher' | 'admin'
 
 export default function RegisterPage() {
-  const [role, setRole] = useState<Role>('teacher')
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [teacherId, setTeacherId] = useState<number | ''>('')
 
@@ -27,7 +32,7 @@ export default function RegisterPage() {
         const data = await res.json()
         if (!cancelled && Array.isArray(data)) setTeachers(data)
       } catch {
-        // ignore - teachers list is optional for admin role
+        // ignore
       }
     }
     loadTeachers()
@@ -36,17 +41,13 @@ export default function RegisterPage() {
     }
   }, [])
 
-  useEffect(() => {
-    if (role === 'admin') setTeacherId('')
-  }, [role])
-
   const canSubmit = useMemo(() => {
     if (!username.trim()) return false
     if (password.length < 6) return false
     if (password !== confirm) return false
-    if (role === 'teacher' && teacherId === '') return false
+    if (teacherId === '') return false
     return true
-  }, [username, password, confirm, role, teacherId])
+  }, [username, password, confirm, teacherId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,8 +62,8 @@ export default function RegisterPage() {
         body: JSON.stringify({
           username,
           password,
-          role,
-          teacherId: role === 'teacher' ? Number(teacherId) : null,
+          role: 'teacher',
+          teacherId: Number(teacherId),
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -83,123 +84,109 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-background flex items-center justify-center px-3 sm:px-4 py-8 sm:py-12 relative">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
 
       <div className="w-full max-w-lg">
-        <div className="bg-white/80 backdrop-blur rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Create account</h1>
-              <p className="text-sm text-gray-600 mt-1">Register for Attendify</p>
+        <Card className="border-2 shadow-card-hover">
+          <CardHeader className="space-y-1 pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-glow-sm">
+                  <UserPlus className="h-6 w-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl sm:text-3xl">Create account</CardTitle>
+                  <CardDescription className="mt-0.5">Register for Attendify</CardDescription>
+                </div>
+              </div>
+              <Link href="/" className="text-sm font-semibold text-primary hover:underline">
+                Back to home
+              </Link>
             </div>
-            <Link href="/" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700">
-              Back to home
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 mb-6">
-            <button
-              type="button"
-              onClick={() => setRole('teacher')}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold border ${
-                role === 'teacher'
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              Teacher
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('admin')}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold border ${
-                role === 'admin'
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              Admin
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {role === 'teacher' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Teacher</label>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="teacher">Faculty profile</Label>
                 <select
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  id="teacher"
+                  className={cn(
+                    'flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-base',
+                    'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary',
+                    'disabled:cursor-not-allowed disabled:opacity-50'
+                  )}
                   value={teacherId}
                   onChange={(e) => setTeacherId(e.target.value ? Number(e.target.value) : '')}
                   disabled={isLoading}
                   required
                 >
-                  <option value="">Select teacher</option>
+                  <option value="">Select your name</option>
                   {teachers.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name}
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">This links your login to a teacher identity.</p>
+                <p className="text-xs text-muted-foreground">Link your account to your faculty profile.</p>
               </div>
-            )}
 
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <input
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    disabled={isLoading}
+                    required
+                    placeholder="Username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    required
+                    placeholder="Min 6 characters"
+                  />
+                  <p className="text-xs text-muted-foreground">Minimum 6 characters.</p>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input
+
+              <div className="space-y-2">
+                <Label htmlFor="confirm">Confirm password</Label>
+                <Input
+                  id="confirm"
                   type="password"
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
                   disabled={isLoading}
                   required
+                  placeholder="Confirm password"
                 />
-                <p className="text-xs text-gray-500 mt-1">Minimum 6 characters.</p>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm password</label>
-              <input
-                type="password"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                disabled={isLoading}
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading || !canSubmit}
-              className="w-full rounded-lg bg-indigo-600 text-white font-semibold py-3 hover:bg-indigo-700 disabled:opacity-60"
-            >
-              {isLoading ? 'Creating…' : 'Create account'}
-            </button>
-          </form>
-
-          <div className="mt-6 text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-700">
-              Sign in
-            </Link>
-          </div>
-        </div>
+              <Button type="submit" className="w-full" size="lg" disabled={isLoading || !canSubmit}>
+                {isLoading ? 'Creating…' : 'Create account'}
+              </Button>
+            </form>
+            <p className="text-center text-sm text-muted-foreground">
+              Already have an account?{' '}
+              <Link href="/login" className="font-semibold text-primary hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
 }
-

@@ -1,4 +1,5 @@
 import AttendancePreview from '@/components/AttendancePreview'
+import { PreviewPageSkeleton } from '@/components/skeletons'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
  */
 export default function PreviewPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<PreviewPageSkeleton />}>
       <AttendancePreview />
     </Suspense>
   )
