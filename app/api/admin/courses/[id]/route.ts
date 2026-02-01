@@ -11,12 +11,12 @@ const sql = neon(process.env.DATABASE_URL!);
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    
+    const { id: idParam } = await params
     const { semester, courseName, courseCode } = await request.json();
-    const id = parseInt(params.id);
+    const id = parseInt(idParam);
     
     if (!semester || !courseName || !courseCode) {
       return NextResponse.json(
@@ -64,11 +64,11 @@ export async function PUT(
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    
-    const id = parseInt(params.id);
+    const { id: idParam } = await params
+    const id = parseInt(idParam);
     
     const result = await sql`
       DELETE FROM courses
